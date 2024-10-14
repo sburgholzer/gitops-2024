@@ -27,4 +27,7 @@ The code in the ./terraform directory is the starter code for the course. This c
 - Followed Derek's video on setting up OIDC
     - used the [oidc-role.yaml](cfn/oidc-role.yaml) template and created a template in CloudFormation and created a stack.
         - This created the OIDC Connection and a role for this repository
-        
+    - updated [terraform.yml](.github/workflows/terraform.yml) to add a new step at the very top of all steps to use `aws-actions/configure-aws-credentials@v4` and including the role ARN to assume and the region to use
+        - to add security to our workflow, we added the role ARN to the production environment secrets in GitHub.
+        - First time we ran this, it failed with message `It looks like you might be trying to authenticate with OIDC. Did you mean to set the id-token permission? If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.`
+            - to fix this: add `id-token: write` to the permissions section within [terraform.yml](.github/workflows/terraform.yml)
