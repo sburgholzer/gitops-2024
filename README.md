@@ -41,4 +41,6 @@ The code in the ./terraform directory is the starter code for the course. This c
         - to add security to our workflow, we added the role ARN to the production environment secrets in GitHub.
         - First time we ran this, it failed with message `It looks like you might be trying to authenticate with OIDC. Did you mean to set the id-token permission? If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.`
             - to fix this: add `id-token: write` to the permissions section within [terraform.yml](.github/workflows/terraform.yml)
-- blah
+- created CloudFormation stack via [backend-resources.yaml](cfn/backend-resources.yaml)
+    - First time I ran through creating the stack and left the default S3 Bucket Name. Well I was in autopilot, so I didn't even think about making it a unique name as S3 requires. So the first attempt failed. I ran it again, but added -scott to the end of the default bucket name and it worked (like it should of if I had actually remembered...)
+    
