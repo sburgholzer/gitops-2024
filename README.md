@@ -10,3 +10,13 @@ The code in the ./terraform directory is the starter code for the course. This c
 
 [Original Repo from More Than Certified](https://github.com/morethancertified/gitops-minicamp-2024-tf)
 
+
+#### 10/13/24
+
+- the `required_version` was missing in [versions.tf](terraform/versions.tf), and thus causing linter to fail. 
+    - added `requried_version` and used `>= 1.9.0` to have the latest changes to terraform
+- variable types were missing in [variables.tf](terraform/variables.tf), and thus causing linter to fail.
+    - added `type = string` to both variables
+- after fixing the two (well three as there were two variables) issues above, tflint job passed!
+- The terraform.yml job kept failing for a while on `terraform -chdir="./terraform" fmt -check` even though I was running `terraform fmt` manually
+    - Turns out it helps to be in the terraform directory to run `terraform fmt`... after that that, the job passed until the no credentials found, which is to be expected. Waiting on the video on OIDC setup (though I've done it before, but don't remember all the steps!)
