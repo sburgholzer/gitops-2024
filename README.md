@@ -10,7 +10,17 @@ The code in the ./terraform directory is the starter code for the course. This c
 
 [Original Repo from More Than Certified](https://github.com/morethancertified/gitops-minicamp-2024-tf)
 
+## Workflows
 
+### GitHub Actions used in terraform.yml
+[terraform.yml](.github/workflows/terraform.yml)
+
+- [aws-actions/configure-aws-credentials@v4](https://github.com/aws-actions/configure-aws-credentials/tree/v4/)
+- [actions/checkout@v4](https://github.com/actions/checkout/tree/v4/)
+- [hashicorp/setup-terraform@v3](https://github.com/hashicorp/setup-terraform/tree/v3/)
+
+
+## Journal of activities taken
 #### 10/13/24
 
 - the `required_version` was missing in [versions.tf](terraform/versions.tf), and thus causing linter to fail. 
@@ -31,3 +41,4 @@ The code in the ./terraform directory is the starter code for the course. This c
         - to add security to our workflow, we added the role ARN to the production environment secrets in GitHub.
         - First time we ran this, it failed with message `It looks like you might be trying to authenticate with OIDC. Did you mean to set the id-token permission? If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.`
             - to fix this: add `id-token: write` to the permissions section within [terraform.yml](.github/workflows/terraform.yml)
+- blah
