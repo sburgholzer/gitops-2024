@@ -75,3 +75,22 @@ The code in the ./terraform directory is the starter code for the course. This c
   - Enabled `Require a pull request before merging`
   - Enabled `Require status checks to pass`
     - When adding checks, you can search for your GitHub Action workflows and use them, so currently Terraform and TFlint workflows are the checks.
+  - Updated our S3 backend in [versions.tf](terraform/versions.tf) to use [Partial Configuration](https://developer.hashicorp.com/terraform/language/backend#partial-configuration)
+  - Updated [terraform.yml](.github/workflows/terraform.yml) to use these global env vars for Partial Configuration for S3 backend in terraform:
+    ```env:
+        TF_VAR_BACKEND_BUCKET: ${{ vars.BUCKET_NAME }}
+        TF_VAR_BACKEND_KEY: ${{ vars.STATE_KEY }}
+        TF_VAR_BACKEND_REGION: ${{ vars.REGION }}
+        TF_VAR_BACKEND_DYNAMODB_TABLE: ${{ vars.DYNAMODB_NAME }}
+    ```
+  - Updated [terraform.yml](.github/workflows/terraform.yml) terraform init step to:
+    ```
+    - name: Terraform Init
+      run: |
+        terraform init \
+          -backend-config="bucket=${TF_VAR_BACKEND_BUCKET}" \
+          -backend-config="key=${TF_VAR_BACKEND_KEY}" \
+          -backend-config="region=${TF_VAR_BACKEND_REGION}" \
+          -backend-config="encrypt=true" \
+          -backend-config="dynamodb_table=${TF_VAR_BACKEND_DYNAMODB_TABLE}"
+    ```
