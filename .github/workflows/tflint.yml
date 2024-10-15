@@ -1,9 +1,11 @@
 name: Lint
+
 on:
   push:
     branches: [ development ]
   pull_request:
     branches: [ main ]
+
 
 jobs:
   tflint:
