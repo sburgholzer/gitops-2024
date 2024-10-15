@@ -64,4 +64,4 @@ The code in the ./terraform directory is the starter code for the course. This c
         }}
       ...
       ```
-      This did create a new environment for us to use, however we don't have the `ROLE_TO_ASSUME` secret in this new environment. So added that secret to this new environment.
+      This did create a new environment for us to use, however we don't have the `ROLE_TO_ASSUME` secret in this new environment. So added that secret to this new environment. Info found here: [Github Community](https://github.com/orgs/community/discussions/38178).
