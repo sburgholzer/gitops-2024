@@ -43,4 +43,3 @@ The code in the ./terraform directory is the starter code for the course. This c
             - to fix this: add `id-token: write` to the permissions section within [terraform.yml](.github/workflows/terraform.yml)
 - created CloudFormation stack via [backend-resources.yaml](cfn/backend-resources.yaml)
     - First time I ran through creating the stack and left the default S3 Bucket Name. Well I was in autopilot, so I didn't even think about making it a unique name as S3 requires. So the first attempt failed. I ran it again, but added -scott to the end of the default bucket name and it worked (like it should of if I had actually remembered...)
-     
