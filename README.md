@@ -65,3 +65,13 @@ The code in the ./terraform directory is the starter code for the course. This c
       ...
       ```
       This did create a new environment for us to use, however we don't have the `ROLE_TO_ASSUME` secret in this new environment. So added that secret to this new environment. Info found here: [Github Community](https://github.com/orgs/community/discussions/38178).
+
+#### 10/15/24
+- In [terraform.yml](.github/workflows/terraform.yml), changed the default evnironment from staging to development
+- Deleted the classic rule set for protecting main branch
+- Created, using the newer method, to protect main branch
+  - Settings->Code and Automation->Rules->Rulesets
+  - branch matching pattern was set to `main`
+  - Enabled `Require a pull request before merging`
+  - Enabled `Require status checks to pass`
+    - When adding checks, you can search for your GitHub Action workflows and use them, so currently Terraform and TFlint workflows are the checks.
