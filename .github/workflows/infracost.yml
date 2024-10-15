@@ -7,8 +7,8 @@ on:
   pull_request:
     branches: [ main ]
     types: [opened, synchronize, closed]
-  push:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]
 
 jobs:
   # This stage runs the Infracost CLI and posts PR comments.
@@ -37,7 +37,7 @@ jobs:
       # Generate Infracost JSON file as the baseline.
       - name: Generate Infracost cost estimate baseline
         run: |
-          infracost breakdown --path=. \
+          infracost breakdown --path=./terraform \
                               --format=json \
                               --out-file=/tmp/infracost-base.json
 
@@ -48,15 +48,24 @@ jobs:
       # Generate an Infracost diff and save it to a JSON file.
       - name: Generate Infracost diff
         run: |
-          infracost diff --path=. \
+          infracost diff --path=./terraform \
                           --format=json \
                           --compare-to=/tmp/infracost-base.json \
                           --out-file=/tmp/infracost.json
 
+      # - name: Post Infracost comment
+      #   run: |
+      #       infracost comment github --path=/tmp/infracost.json \
+      #                                --repo=$GITHUB_REPOSITORY \
+      #                                --github-token=${{ github.token }} \
+      #                                --pull-request=${{ github.event.pull_request.number }} \
+      #                                --behavior=update
       - name: Post Infracost comment
         run: |
-            infracost comment github --path=/tmp/infracost.json \
-                                     --repo=$GITHUB_REPOSITORY \
-                                     --github-token=${{ github.token }} \
-                                     --pull-request=${{ github.event.pull_request.number }} \
-                                     --behavior=update
+          infracost comment github --path=/tmp/infracost.json \
+                                  --repo=$GITHUB_REPOSITORY \
+                                  --github-token=${{ github.token }} \
+                                  --pull-request=${{ github.event.pull_request.number }} \
+                                  --behavior=update \
+                                  --show-all-projects=true \
+                                  --show-skipped=true
