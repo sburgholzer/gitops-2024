@@ -3,12 +3,12 @@ name: 'Terraform'
 on:
   push:
     branches: [ 'development']
-    paths:
-      - 'terraform/**'
+    #paths:
+    #  - 'terraform/**'
   pull_request:
     branches: [ 'main' ]
-    paths:
-      - 'terraform/**'
+    #paths:
+    #  - 'terraform/**'
 
 permissions:
   contents: read
