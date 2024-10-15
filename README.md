@@ -44,3 +44,24 @@ The code in the ./terraform directory is the starter code for the course. This c
 - created CloudFormation stack via [backend-resources.yaml](cfn/backend-resources.yaml)
     - First time I ran through creating the stack and left the default S3 Bucket Name. Well I was in autopilot, so I didn't even think about making it a unique name as S3 requires. So the first attempt failed. I ran it again, but added -scott to the end of the default bucket name and it worked (like it should of if I had actually remembered...)
 - Protecting main branch from commits/pushes if no Pull Request. I set up a classic branch protection under settings->Code and automation->Branches. Set the Branch name pattern to main, and selected Require a pull request before merging. I then tested it, however I was able to push directly to main, which I did not want. Turns out I needed to select the Do not allow bypassing the above settings to prevent myself (the owner of the repo) from pushing to the main branch. There is also rulesets under settings->code and automation-> Rules. This would allow additional settings, but at this time, I do not see a need to look into those further.
+- In [terraform.yml](.github/workflows/terraform.yml) 
+    - Changed the on block to: 
+      ```
+      on:
+       push:
+         branches: ['development]
+       pull_request:
+         branches ['main']
+      ```
+    - Changed the environment block under jobs to
+      ```
+      ...
+      environment: |-
+        ${{
+            github.ref_name == 'main'        && 'production'
+        || github.ref_name == 'development' && 'development'
+        ||                                     'staging'
+        }}
+      ...
+      ```
+      This did create a new environment for us to use, however we don't have the `ROLE_TO_ASSUME` secret in this new environment. So added that secret to this new environment. Info found here: [Github Community](https://github.com/orgs/community/discussions/38178).
