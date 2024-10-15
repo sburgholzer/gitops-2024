@@ -1,12 +1,14 @@
 name: Infracost
 
+# Infracost runs on pull requests (PR) and posts PR comments.
+# If you use Infracost Cloud, Infracost also runs on main/master branch pushes so the dashboard is updated.
+# The GitHub Action docs (https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows) describe other trigger options.
 on:
   pull_request:
     branches: [ main ]
     types: [opened, synchronize, closed]
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   # This stage runs the Infracost CLI and posts PR comments.
@@ -21,6 +23,8 @@ jobs:
     steps:
       - name: Setup Infracost
         uses: infracost/actions/setup@v3
+        # See https://github.com/infracost/actions/tree/master/setup for other inputs
+        # If you can't use this action, use Docker image infracost/infracost:ci-0.10
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
@@ -44,39 +48,15 @@ jobs:
       # Generate an Infracost diff and save it to a JSON file.
       - name: Generate Infracost diff
         run: |
-          infracost diff --path=./terraform \
+          infracost diff --path=. \
                           --format=json \
                           --compare-to=/tmp/infracost-base.json \
-                          --out-file=/tmp/infracost.json 
-                          
-      - name: Generate Infracost breakdown
-        run: |
-          infracost breakdown --path=./terraform \
-                              --format=json \
-                              --out-file=/tmp/infracost-breakdown.json \
-                              --show-skipped
+                          --out-file=/tmp/infracost.json
 
-      # Posts a comment to the PR using the 'update' behavior.
-      # This creates a single comment and updates it. The "quietest" option.
-      # The other valid behaviors are:
-      #   delete-and-new - Delete previous comments and create a new one.
-      #   hide-and-new - Minimize previous comments and create a new one.
-      #   new - Create a new cost estimate comment on every push.
-      # See https://www.infracost.io/docs/features/cli_commands/#comment-on-pull-requests for other options.
-      - name: Post Infracost Breakdown comment
+      - name: Post Infracost comment
         run: |
-          infracost comment github --path=/tmp/infracost-breakdown.json \
-                                  --repo=$GITHUB_REPOSITORY \
-                                  --github-token=${{ github.token }} \
-                                  --pull-request=${{ github.event.pull_request.number }} \
-                                  --behavior=update \
-                                  --format=custom-markdown \
-      - name: Post Infracost Breakdown comment
-        run: |
-          infracost comment github --path=/tmp/infracost-base.json \
-                                  --repo=$GITHUB_REPOSITORY \
-                                  --github-token=${{ github.token }} \
-                                  --pull-request=${{ github.event.pull_request.number }} \
-                                  --behavior=update \
-                                  --format=custom-markdown \
-
+            infracost comment github --path=/tmp/infracost.json \
+                                     --repo=$GITHUB_REPOSITORY \
+                                     --github-token=${{ github.token }} \
+                                     --pull-request=${{ github.event.pull_request.number }} \
+                                     --behavior=update
