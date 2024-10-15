@@ -2,7 +2,7 @@ name: 'Terraform'
 
 on:
   push:
-    branches: [ 'development' ]
+    branches: [ 'development', 'main' ]
   pull_request:
     branches: [ 'main' ]
 
@@ -19,7 +19,7 @@ jobs:
       ${{
          github.ref_name == 'main'        && 'production'
       || github.ref_name == 'development' && 'development'
-      ||                                     'staging'
+      ||                                     'development'
       }}
 
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
