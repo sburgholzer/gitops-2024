@@ -44,11 +44,17 @@ jobs:
       # Generate an Infracost diff and save it to a JSON file.
       - name: Generate Infracost diff
         run: |
-          infracost diff --path=. \
+          infracost diff --path=./terraform \
                           --format=json \
                           --compare-to=/tmp/infracost-base.json \
-                          --out-file=/tmp/infracost.json \
-                          --show-skipped
+                          --out-file=/tmp/infracost.json 
+                          
+      - name: Generate Infracost breakdown
+        run: |
+          infracost breakdown --path=./terraform \
+                              --format=json \
+                              --out-file=/tmp/infracost-breakdown.json \
+                              --show-skipped
 
       # Posts a comment to the PR using the 'update' behavior.
       # This creates a single comment and updates it. The "quietest" option.
@@ -57,13 +63,20 @@ jobs:
       #   hide-and-new - Minimize previous comments and create a new one.
       #   new - Create a new cost estimate comment on every push.
       # See https://www.infracost.io/docs/features/cli_commands/#comment-on-pull-requests for other options.
-      - name: Post Infracost comment
+      - name: Post Infracost Breakdown comment
         run: |
-          infracost comment github --path=/tmp/infracost.json \
+          infracost comment github --path=/tmp/infracost-breakdown.json \
                                   --repo=$GITHUB_REPOSITORY \
                                   --github-token=${{ github.token }} \
                                   --pull-request=${{ github.event.pull_request.number }} \
                                   --behavior=update \
                                   --format=custom-markdown \
-                                  --template=infracost-comment-template.md
+      - name: Post Infracost Breakdown comment
+        run: |
+          infracost comment github --path=/tmp/infracost-base.json \
+                                  --repo=$GITHUB_REPOSITORY \
+                                  --github-token=${{ github.token }} \
+                                  --pull-request=${{ github.event.pull_request.number }} \
+                                  --behavior=update \
+                                  --format=custom-markdown \
 
