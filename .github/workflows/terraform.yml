@@ -2,20 +2,25 @@ name: 'Terraform'
 
 on:
   push:
-    branches: [ 'main' ]
+    branches: [ 'development' ]
   pull_request:
+    branches: [ 'main' ]
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-    
-
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
-    environment: production
+    #environment: production
+    environment: |-
+      ${{
+         github.ref_name == 'main'        && 'production'
+      || github.ref_name == 'development' && 'development'
+      ||                                      'staging'
+      }}
 
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
