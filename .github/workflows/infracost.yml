@@ -1,0 +1,71 @@
+name: Infracost
+
+# Infracost runs on pull requests (PR) and posts PR comments.
+# If you use Infracost Cloud, Infracost also runs on main/master branch pushes so the dashboard is updated.
+# The GitHub Action docs (https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows) describe other trigger options.
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, closed]
+  # push:
+  #   branches: [ main ]
+
+jobs:
+  # This stage runs the Infracost CLI and posts PR comments.
+  # It also updates PR comments when the PR is updated (synchronize event).
+  infracost-pull-request-checks:
+    name: Infracost Pull Request Checks
+    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # Required to post comments
+    steps:
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        # See https://github.com/infracost/actions/tree/master/setup for other inputs
+        # If you can't use this action, use Docker image infracost/infracost:ci-0.10
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      # Checkout the base branch of the pull request (e.g. main/master).
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: '${{ github.event.pull_request.base.ref }}'
+
+      # Generate Infracost JSON file as the baseline.
+      - name: Generate Infracost cost estimate baseline
+        run: |
+          infracost breakdown --path=./terraform \
+                              --format=json \
+                              --out-file=/tmp/infracost-base.json
+
+      # Checkout the current PR branch so we can create a diff.
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      # Generate an Infracost diff and save it to a JSON file.
+      - name: Generate Infracost diff
+        run: |
+          infracost diff --path=./terraform \
+                          --format=json \
+                          --compare-to=/tmp/infracost-base.json \
+                          --out-file=/tmp/infracost.json
+
+      # - name: Post Infracost comment
+      #   run: |
+      #       infracost comment github --path=/tmp/infracost.json \
+      #                                --repo=$GITHUB_REPOSITORY \
+      #                                --github-token=${{ github.token }} \
+      #                                --pull-request=${{ github.event.pull_request.number }} \
+      #                                --behavior=update
+      - name: Post Infracost comment
+        run: |
+          infracost comment github --path=/tmp/infracost.json \
+                                  --repo=$GITHUB_REPOSITORY \
+                                  --github-token=${{ github.token }} \
+                                  --pull-request=${{ github.event.pull_request.number }} \
+                                  --behavior=update \
+                                  --show-all-projects=true \
+                                  --show-skipped=true
