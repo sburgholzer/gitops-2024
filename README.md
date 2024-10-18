@@ -96,4 +96,4 @@ The code in the ./terraform directory is the starter code for the course. This c
     ```
 
 #### 10/18/24
-- added in [branchpolicy.yml](.github/workflows/branchpolicy.yml) to prevent PRs to Main if it is not from the staging branch.
+- 
