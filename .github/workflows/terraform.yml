@@ -14,12 +14,13 @@ jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
-    environment: |-
-      ${{
-         github.ref_name == 'main'        && 'production'
-      || github.ref_name == 'development' && 'development'
-      ||                                     'development'
-      }}
+    environment: production
+    # environment: |-
+    #   ${{
+    #      github.ref_name == 'main'        && 'production'
+    #   || github.ref_name == 'development' && 'development'
+    #   ||                                     'development'
+    #   }}
 
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
