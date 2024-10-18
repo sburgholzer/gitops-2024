@@ -35,9 +35,6 @@ jobs:
         TF_VAR_BACKEND_DYNAMODB_TABLE: ${{ vars.DYNAMODB_NAME }}
 
     steps:
-    - name: Skip push during pull request
-      if: github.event_name == 'push' && github.event.pull_request != null
-      run: 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
