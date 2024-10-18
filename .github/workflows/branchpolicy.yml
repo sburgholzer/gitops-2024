@@ -1,0 +1,16 @@
+name: Branch Policy Check
+
+on:
+    pull_request:
+        branches: [main]
+
+jobs:
+    check_branch_policy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: check branch policy
+              run: |
+                if [ "${{ github.head_ref }}" != "staging" ]; then
+                  echo "Direct PRs to main from any branch other than staging is not allowed."
+                  exit 1
+                fi
