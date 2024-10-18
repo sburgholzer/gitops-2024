@@ -1,0 +1,71 @@
+name: 'Terraform'
+
+on:
+  push:
+    branches: [ 'development' ]
+  pull_request_target:
+    branches: [ 'main' ]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    environment: production
+    # environment: |-
+    #   ${{
+    #      github.ref_name == 'main'        && 'production'
+    #   || github.ref_name == 'development' && 'development'
+    #   ||                                     'development'
+    #   }}
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+
+    env:
+        TF_VAR_BACKEND_BUCKET: ${{ vars.BUCKET_NAME }}
+        TF_VAR_BACKEND_KEY: ${{ vars.STATE_KEY }}
+        TF_VAR_BACKEND_REGION: ${{ vars.REGION }}
+        TF_VAR_BACKEND_DYNAMODB_TABLE: ${{ vars.DYNAMODB_NAME }}
+
+    steps:
+    - name: Skip push during pull request
+      if: github.event_name == 'push' && github.event.pull_request != null
+      run: 
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+          role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
+          aws-region: us-east-1
+
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      run: |
+        terraform init \
+          -backend-config="bucket=${TF_VAR_BACKEND_BUCKET}" \
+          -backend-config="key=${TF_VAR_BACKEND_KEY}" \
+          -backend-config="region=${TF_VAR_BACKEND_REGION}" \
+          -backend-config="encrypt=true" \
+          -backend-config="dynamodb_table=${TF_VAR_BACKEND_DYNAMODB_TABLE}"
+
+    # Checks that all Terraform configuration files adhere to a canonical format
+    - name: Terraform Format
+      run: terraform fmt -check
+
+    # Generates an execution plan for Terraform
+    - name: Terraform Plan
+      run: terraform plan -input=false
