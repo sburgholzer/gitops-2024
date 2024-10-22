@@ -94,3 +94,9 @@ The code in the ./terraform directory is the starter code for the course. This c
           -backend-config="encrypt=true" \
           -backend-config="dynamodb_table=${TF_VAR_BACKEND_DYNAMODB_TABLE}"
     ```
+
+#### 10/22/24
+- Created [tfapply.yml](.github/workflows/tfapply.yml) for a manual action to run terraform apply
+- Created [tfdestroy.yml](.github/workflows/tfdestroy.yml) for a manual action to run terraform destroy
+- Updated [terraform.tfvars](terraform/terraform.tfvars) to change from t3.micro to t2.micro due errors relating to it not being avaliable in a AZ
+- While not using it, updated [main.tf](terraform/main.tf) to have a commented out check block for future reference
