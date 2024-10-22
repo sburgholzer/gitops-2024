@@ -100,3 +100,6 @@ The code in the ./terraform directory is the starter code for the course. This c
 - Created [tfdestroy.yml](.github/workflows/tfdestroy.yml) for a manual action to run terraform destroy
 - Updated [terraform.tfvars](terraform/terraform.tfvars) to change from t3.micro to t2.micro due errors relating to it not being avaliable in a AZ
 - While not using it, updated [main.tf](terraform/main.tf) to have a commented out check block for future reference
+- Thanks to Derek's video, understood [infracost.yml](.github/workflows/infracost.yml) more, it was working as expected, I was trying to be too "extra"!
+- added [cost.rego](policies/cost.rego) for an OPA policy to fail infracost if price change > $10
+- updated [infracost.yml](.github/workflows/infracost.yml) to use this OPA policy
