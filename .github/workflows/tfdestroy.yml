@@ -1,0 +1,57 @@
+name: 'Terraform Destroy'
+
+on: workflow_dispatch
+
+permissions:
+    contents: read
+    id-token: write
+
+jobs:
+    terraform:
+        name: 'Terraform Destroy Flow'
+        runs-on: ubuntu-latest
+        environment: production
+        defaults:
+            run:
+                shell: bash
+                working-directory: ./terraform
+        
+        env:
+            TF_VAR_BACKEND_BUCKET: ${{ vars.BUCKET_NAME }}
+            TF_VAR_BACKEND_KEY: ${{ vars.STATE_KEY }}
+            TF_VAR_BACKEND_REGION: ${{ vars.REGION }}
+            TF_VAR_BACKEND_DYNAMODB_TABLE: ${{ vars.DYNAMODB_NAME }}
+            
+        steps:
+            # Configure AWS Creds
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
+                aws-region: ${{ vars.REGION }}
+            
+            # Checkout the repo
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            # Install latest terraform CLI
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+            
+            # Initialize Terraform
+            - name: Terraform Init
+              run: |
+                terraform init \
+                -backend-config="bucket=${TF_VAR_BACKEND_BUCKET}" \
+                -backend-config="key=${TF_VAR_BACKEND_KEY}" \
+                -backend-config="region=${TF_VAR_BACKEND_REGION}" \
+                -backend-config="encrypt=true" \
+                -backend-config="dynamodb_table=${TF_VAR_BACKEND_DYNAMODB_TABLE}"
+            
+            # Generate the execution plan for the destory for a record
+            - name: Terraform Plan
+              run: terraform plan -input=false -destroy
+            
+            # Run Terraform Destroy
+            - name: Terraform Destroy
+              run: terraform destroy -input=false -auto-approve
