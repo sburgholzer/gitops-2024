@@ -37,13 +37,24 @@ jobs:
                           --format=json \
                           --compare-to=/tmp/infracost-base.json \
                           --out-file=/tmp/infracost.json
+      - name: Setup OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+                  
+      - name: Evaluate OPA Policy
+        run: |
+          opa eval --input /tmp/infracost.json --data ./policies/cost.rego 'data.infracost.deny' > opa_result.json
+          cat opa_result.json
+          
       - name: Post Infracost comment
         run: |
             infracost comment github --path=/tmp/infracost.json \
-                                     --repo=$GITHUB_REPOSITORY \
-                                     --github-token=${{ github.token }} \
-                                     --pull-request=${{ github.event.pull_request.number }} \
-                                     --behavior=update \
-                                     --policy-path ./policies/cost.rego
+                         --repo=$GITHUB_REPOSITORY \
+                         --github-token=${{ github.token }} \
+                         --pull-request=${{ github.event.pull_request.number }} \
+                         --behavior=update \
+                         --policy-path=policies/cost.rego
+
 
   
