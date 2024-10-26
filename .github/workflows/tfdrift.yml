@@ -1,0 +1,16 @@
+name: 'Drift Detection'
+
+on:
+    schedule:
+        # runs this every hour
+        - cron: '0 * * * *'
+
+jobs:
+    detect_drift:
+        uses: ./.github/workflows/tfplan.yml
+        permissions:
+            contents: read
+            id-token: write
+            pull-requests: write
+        secrets:
+            ROLE_TO_ASSUME: ${{ secrets.ROLE_TO_ASSUME }}
