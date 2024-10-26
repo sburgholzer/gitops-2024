@@ -1,0 +1,71 @@
+name: 'Terraform Plan'
+
+on:
+    pull_request:
+    workflow_call:
+        secrets:
+            ROLE_TO_ASSUME:
+                required: true
+
+permissions:
+    contents: read
+    id-token: write
+    pull-requests: write
+
+jobs:
+    terraform:
+        name: 'Terraform Plan'
+        runs-on: ubuntu-latest
+        environment: production
+        defaults:
+            run:
+                shell: bash
+                working-directory: ./terraform
+        env:
+            GH_TOKEN: ${{ github.token }}
+            TF_VAR_BACKEND_BUCKET: ${{ vars.BUCKET_NAME }}
+            TF_VAR_BACKEND_KEY: ${{ vars.STATE_KEY }}
+            TF_VAR_BACKEND_REGION: ${{ vars.REGION }}
+            TF_VAR_BACKEND_DYNAMODB_TABLE: ${{ vars.DYNAMODB_NAME }}
+            
+        steps:
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
+                aws-region: ${{ vars.REGION }}
+            
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+            
+            - name: Terraform Init
+              run: |
+                terraform init \
+                -backend-config="bucket=${TF_VAR_BACKEND_BUCKET}" \
+                -backend-config="key=${TF_VAR_BACKEND_KEY}" \
+                -backend-config="region=${TF_VAR_BACKEND_REGION}" \
+                -backend-config="encrypt=true" \
+                -backend-config="dynamodb_table=${TF_VAR_BACKEND_DYNAMODB_TABLE}"
+
+            - name: Terraform Format
+              run: terraform fmt -check
+            
+            - name: Terraform Plan
+              id: plan
+              run: |
+                terraform plan -out=plan.tfplan
+                terraform show -json plan.tfplan > /tmp/plan.json
+                cat /tmp/plan.json
+            
+            - name: Setup OPA
+              uses: open-policy-agent/setup-opa@v2
+              with:
+                version: latest
+            
+            - name: Run OPA Tests
+              run: |
+                opaout=$(opa eval --data ../policies/instance-policy.rego --input /tmp/plan.json "data.terraform.deny" | jq -r '.result[].expressions[].value[]')
+                [ -z "$opaout" ] && exit 0 || echo "$opaout" && gh pr comment ${{ github.event.pull_request.number }} --body "### $opaout" && exit 1
