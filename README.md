@@ -103,3 +103,8 @@ The code in the ./terraform directory is the starter code for the course. This c
 - Thanks to Derek's video, understood [infracost.yml](.github/workflows/infracost.yml) more, it was working as expected, I was trying to be too "extra"!
 - added [cost.rego](policies/cost.rego) for an OPA policy to fail infracost if price change > $10
 - updated [infracost.yml](.github/workflows/infracost.yml) to use this OPA policy
+
+#### 10/26/24
+- Created [instance-policy.rego](policies/instance-policy.rego) to allow only certain instance types
+- Created [tfplan.yml](.github/workflows/tfapply.yml) to use this new policy
+  - Deactivated the workflow in Actions that uses [terraform.yml](.github/workflows/terraform.yml) to use the new workflow yml
