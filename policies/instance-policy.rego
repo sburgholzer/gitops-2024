@@ -13,14 +13,3 @@ deny contains msg if {
         [resource.address, instance_type, allowed_instance_types]
     )
 }
-
-deny contains msg if {
-    some resource in input.resource_changes
-    resource.type == "aws_instance"
-    resource.change.actions[_] == "create"
-    resource.change.actions[_] == "delete
-    msg := sprintf(
-        "EC2 instance '%s' was deleted outside of Terraform and needs to be recreated",
-        [resource.address]
-    )
-}
