@@ -61,6 +61,13 @@ jobs:
                 terraform show -json plan.tfplan > /tmp/plan.json
                 cat /tmp/plan.json
             
+            - name: upload Plan Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                name: terraform-plan
+                path: /tmp/plan.json
+                retention-days: 1
+            
             - name: Setup OPA
               uses: open-policy-agent/setup-opa@v2
               with:
