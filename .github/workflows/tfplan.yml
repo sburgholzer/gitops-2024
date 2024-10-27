@@ -6,6 +6,7 @@ on:
         secrets:
             ROLE_TO_ASSUME:
                 required: true
+    
 
 permissions:
     contents: read
