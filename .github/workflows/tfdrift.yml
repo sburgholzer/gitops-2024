@@ -53,11 +53,14 @@ jobs:
                 GH_TOKEN: ${{ github.token }}
               run: |
                 gh issue create \
-                 --title "🚨 Infrastructure Drift Detected" \
-                 --body "Infrastructure drift was detected during the automated hourly check.
-                 
-                 ${{ env.drift_message }}
+                --title "🚨 Infrastructure Drift Detected" \
+                --body "$(cat <<EOF
+                Infrastructure drift was detected during the automated hourly check.
 
-                 [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                ${{ env.drift_message }}
+
+                [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+                EOF
+                )"
               
     
