@@ -40,7 +40,7 @@ jobs:
             
             - name: Check for drift
               run: |
-                opaout=$(opa eval --data ./policies/drift-policy.rego --input /tmp/plan.json "data.terraform.deny" | jq -r '.result[]?.expressions[]?.value[]? // empty')
+                opaout=$(opa eval --data ./policies/missing-instance-policy.rego --input /tmp/plan.json "data.terraform.deny" | jq -r '.result[]?.expressions[]?.value[]? // empty')
                 if [ ! -z "$opaout" ]; then
                   echo "::error::$opaout"
                   exit 1
