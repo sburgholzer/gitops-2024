@@ -53,7 +53,7 @@ jobs:
                 GH_TOKEN: ${{ github.token }}
               run: |
                 gh issue create \
-                 --title "🚨 Infrastructure Drift Detected"
+                 --title "🚨 Infrastructure Drift Detected" \
                  --body "Infrastructure drift was detected during the automated hourly check.
                  
                  ${{ env.drift_message }}
