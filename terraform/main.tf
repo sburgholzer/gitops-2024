@@ -96,18 +96,18 @@ resource "aws_instance" "grafana_server" {
   }
 }
 
-check "aws_environment_validation" {
-  data "aws_caller_identity" "current" {}
-  data "aws_region" "current" {}
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+check "aws_environment_validation" {
   assert {
-    condition     = data.aws_region.current.name == var.expected_region
-    error_message = "Incorrect AWS region. Expected ${var.expected_region}, but got ${data.aws_region.current.name}"
+    condition     = data.aws_region.current.name == var.region
+    error_message = "Incorrect AWS region. Expected ${var.region}, but got ${data.aws_region.current.name}"
   }
 
   assert {
-    condition     = data.aws_caller_identity.current.account_id == var.expected_account_id
-    error_message = "Incorrect AWS account. Expected ${var.expected_account_id}, but got ${data.aws_caller_identity.current.account_id}"
+    condition     = data.aws_caller_identity.current.account_id == var.account_id
+    error_message = "Incorrect AWS account. Expected ${var.account_id}, but got ${data.aws_caller_identity.current.account_id}"
   }
 }
 
