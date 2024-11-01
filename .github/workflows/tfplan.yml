@@ -28,10 +28,10 @@ jobs:
             TF_VAR_BACKEND_KEY: ${{ vars.STATE_KEY }}
             TF_VAR_BACKEND_REGION: ${{ vars.REGION }}
             TF_VAR_BACKEND_DYNAMODB_TABLE: ${{ vars.DYNAMODB_NAME }}
-            TF_VAR_INSTANCE_TYPE: ${{ vars.INSTANCE_TYPE }}
+            TF_VAR_instance_type: ${{ vars.INSTANCE_TYPE }}
             TF_VAR_REGION: ${{ vars.REGION }}
-            TF_VAR_EXPECTED_REGION: ${{ vars.EXPECTED_REGION }}
-            TF_VAR_EXPECTED_ACCOUNT_ID: ${{ secrets.EXPECTED_ACCOUNT_ID }}
+            TF_VAR_expected_region: ${{ vars.EXPECTED_REGION }}
+            TF_VAR_expected_account_id: ${{ secrets.EXPECTED_ACCOUNT_ID }}
 
             
         steps:
