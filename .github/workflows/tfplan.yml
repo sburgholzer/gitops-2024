@@ -54,11 +54,11 @@ jobs:
                 -backend-config="key=${TF_VAR_BACKEND_KEY}" \
                 -backend-config="region=${TF_VAR_BACKEND_REGION}" \
                 -backend-config="encrypt=true" \
-                -backend-config="dynamodb_table=${TF_VAR_BACKEND_DYNAMODB_TABLE}" \
-                -var="region=${TF_VAR_REGION}" \
-                -var="instance_type=${TF_VAR_INSTANCE_TYPE}" \
-                -var="expected_region=${TF_VAR_EXPECTED_REGION}" \
-                -var="expected_account_id=${TF_VAR_EXPECTED_ACCOUNT_ID}"
+                -backend-config="dynamodb_table=${TF_VAR_BACKEND_DYNAMODB_TABLE}" #\
+                # -var="region=${TF_VAR_REGION}" \
+                # -var="instance_type=${TF_VAR_INSTANCE_TYPE}" \
+                # -var="expected_region=${TF_VAR_EXPECTED_REGION}" \
+                # -var="expected_account_id=${TF_VAR_EXPECTED_ACCOUNT_ID}"
 
             - name: Terraform Format
               run: terraform fmt -check
