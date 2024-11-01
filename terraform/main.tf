@@ -19,7 +19,7 @@ resource "aws_vpc" "gitops_vpc" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags = {
+  tags = {g
     Name = "gitops-vpc"
   }
 }
@@ -95,6 +95,21 @@ resource "aws_instance" "grafana_server" {
     Name = "grafana-server"
   }
 }
+
+check "aws_environment_validation" {
+  data "aws_caller_identity" "current" {}
+  data "aws_region" "current" {}
+
+  assert {
+    condition     = data.aws_region.current.name == var.expected_region
+    error_message = "Incorrect AWS region. Expected ${var.expected_region}, but got ${data.aws_region.current.name}"
+  }
+
+  assert {
+    condition     = data.aws_caller_identity.current.account_id == var.expected_account_id
+    error_message = "Incorrect AWS account. Expected ${var.expected_account_id}, but got ${data.aws_caller_identity.current.account_id}"
+}
+
 
 # Just an example of the newish check block
 # check "grafana_health_check" {
