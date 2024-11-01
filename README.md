@@ -108,3 +108,7 @@ The code in the ./terraform directory is the starter code for the course. This c
 - Created [instance-policy.rego](policies/instance-policy.rego) to allow only certain instance types
 - Created [tfplan.yml](.github/workflows/tfapply.yml) to use this new policy
   - Deactivated the workflow in Actions that uses [terraform.yml](.github/workflows/terraform.yml) to use the new workflow yml
+
+#### 11/1/24
+- Ensured all TF Variables are passed in via GitHub Actions
+- Added default tags to the provider block in [providers.tf](terraform/providers.tf)
