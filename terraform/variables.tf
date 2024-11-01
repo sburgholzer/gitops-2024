@@ -6,7 +6,7 @@ variable "instance_type" {
   type        = string
   description = "The instance type for the EC2 instance"
 }
-variable "expected_region" {
+variable "EXPECTED_REGION" {
   type        = string
   description = "The expected region for the resources"
 }

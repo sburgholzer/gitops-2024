@@ -101,8 +101,8 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 check "aws_environment_validation" {
   assert {
-    condition     = data.aws_region.current.name == var.region
-    error_message = "Incorrect AWS region. Expected ${var.region}, but got ${data.aws_region.current.name}"
+    condition     = data.aws_region.current.name == var.EXPECTED_REGION
+    error_message = "Incorrect AWS region. Expected ${var.EXPECTED_REGION}, but got ${data.aws_region.current.name}"
   }
 
   assert {
