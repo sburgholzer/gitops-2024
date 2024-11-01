@@ -10,7 +10,7 @@ variable "expected_region" {
   type        = string
   description = "The expected region for the resources"
 }
-variable "expected_account_id" {
+variable "EXPECTED_ACCOUNT_ID" {
   type        = string
   description = "The expected AWS Account ID to validate against"
 }

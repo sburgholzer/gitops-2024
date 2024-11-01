@@ -106,8 +106,8 @@ check "aws_environment_validation" {
   }
 
   assert {
-    condition     = data.aws_caller_identity.current.account_id == var.account_id
-    error_message = "Incorrect AWS account. Expected ${var.account_id}, but got ${data.aws_caller_identity.current.account_id}"
+    condition     = data.aws_caller_identity.current.account_id == var.EXPECTED_ACCOUNT_ID
+    error_message = "Incorrect AWS account. Expected ${var.EXPECTED_ACCOUNT_ID}, but got ${data.aws_caller_identity.current.account_id}"
   }
 }
 
