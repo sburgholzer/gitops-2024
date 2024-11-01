@@ -19,7 +19,7 @@ resource "aws_vpc" "gitops_vpc" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags = {g
+  tags = {
     Name = "gitops-vpc"
   }
 }
@@ -108,6 +108,7 @@ check "aws_environment_validation" {
   assert {
     condition     = data.aws_caller_identity.current.account_id == var.expected_account_id
     error_message = "Incorrect AWS account. Expected ${var.expected_account_id}, but got ${data.aws_caller_identity.current.account_id}"
+  }
 }
 
 
