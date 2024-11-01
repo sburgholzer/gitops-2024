@@ -120,4 +120,4 @@ The code in the ./terraform directory is the starter code for the course. This c
 - Installed TFlint in codespaces
 - created the [pre-commit-config.yaml](pre-commit-config.yaml) file
   - added terraform_fmt and terraform_tflint as hooks
-  - Would want to potentially add tfsec, tfvalidate, etc for additional checks, but to turn this project in ASAP I did install them
+  - Would want to potentially add tfsec, tfvalidate, tf_docs, etc for additional checks, but to turn this project in ASAP I did install them
