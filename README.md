@@ -108,3 +108,16 @@ The code in the ./terraform directory is the starter code for the course. This c
 - Created [instance-policy.rego](policies/instance-policy.rego) to allow only certain instance types
 - Created [tfplan.yml](.github/workflows/tfapply.yml) to use this new policy
   - Deactivated the workflow in Actions that uses [terraform.yml](.github/workflows/terraform.yml) to use the new workflow yml
+
+#### 11/1/24
+- Ensured all TF Variables are passed in via GitHub Actions
+- Added default tags to the provider block in [providers.tf](terraform/providers.tf)
+- Installed pre-commit
+  ```
+  pip install pre-commit
+  pre-commit install
+  ```
+- Installed TFlint in codespaces
+- created the [.pre-commit-config.yaml](.pre-commit-config.yaml) file
+  - added terraform_fmt and terraform_tflint as hooks
+  - Would want to potentially add tfsec, tfvalidate, tf_docs, etc for additional checks, but to turn this project in ASAP I did install them

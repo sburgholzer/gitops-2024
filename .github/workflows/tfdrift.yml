@@ -4,8 +4,6 @@ on:
     schedule:
         # runs this every hour
         - cron: '0 * * * *'
-    workflow_dispatch: # temporary
-
 jobs:
     # this one checks for instance types
     detect_drift:
@@ -14,50 +12,82 @@ jobs:
             contents: read
             id-token: write
             pull-requests: write
+            issues: write
         secrets:
             ROLE_TO_ASSUME: ${{ secrets.ROLE_TO_ASSUME }}
+            EXPECTED_ACCOUNT_ID: ${{ secrets.EXPECTED_ACCOUNT_ID }}
     
-    # This will check to see if the instance has been
-    # deleted from AWS not through Terraform
-    # and creates an issue.
-    check_instance_exists:
-        needs: detect_drift
-        runs-on: ubuntu-latest
-        steps:
-            - name: checkout
-              uses: actions/checkout@v4
-            
-            - name: Download plan artifact
-              uses: actions/download-artifact@v4
-              with:
-                name: terraform-plan
-                path: /tmp
-            
-            - name: Setup OPA
-              uses: open-policy-agent/setup-opa@v2
-              with:
-                version: latest
-            
-            - name: Check for drift
-              run: |
-                opaout=$(opa eval --data ./policies/missing-instance-policy.rego --input /tmp/plan.json "data.terraform.deny" | jq -r '.result[]?.expressions[]?.value[]? // empty')
-                echo "drift_message=$opaout" >> $GITHUB_ENV
-                if [ ! -z "$opaout" ]; then
-                  echo "::error::$opaout"
-                  exit 1
-                fi
-            
-            - name: Create Issue on Drift Detection
-              if: failure()
-              env:
-                GH_TOKEN: ${{ github.token }}
-              run: |
-                gh issue create \
-                 --title "🚨 Infrastructure Drift Detected" \
-                 --body "Infrastructure drift was detected during the automated hourly check.
-                 
-                 ${{ env.drift_message }}
+    analyze_drift:
+      needs: detect_drift
+      permissions:
+        contents: read
+        id-token: write
+        issues: write
+      runs-on: ubuntu-latest
+      steps:
+        - name: Download Terraform Plan
+          uses: actions/download-artifact@v4
+          with:
+            name: terraform-plan
+            path: /tmp
+        
+        - name: Analyze Plan
+          id: analyze
+          run: |
+            PLAN_OUTPUT=$(cat /tmp/plan.json)
 
-                 [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-              
-    
+            if echo "$PLAN_OUTPUT" | grep -q '"resource_drift":'; then
+              echo "DRIFT_DETECTED=true" >> $GITHUB_ENV
+
+              DRIFT_DETAILS=$(echo "$PLAN_OUTPUT" | jq -r '.resource_drift[] | "- Resource: \(.address)\n  Action: \(.change.actions[0])\n  Details: Changed from \(.change.before.tags_all.Name) to \(.change.after.tags_all.Name)"')
+              echo "DRIFT_DETAILS<<EOF" >> $GITHUB_ENV
+              echo "$DRIFT_DETAILS" >> $GITHUB_ENV
+              echo "EOF" >> $GITHUB_ENV
+            else
+              echo "DRIFT_DETECTED=false" >> $GITHUB_ENV
+            fi
+
+        - name: Create or Update Issue
+          if: env.DRIFT_DETECTED == 'true'
+          uses: actions/github-script@v7
+          with:
+              script: |
+                const issueTitle = '🚨 Infrastructure Drift Detected';
+                const issueBody = `Infrastructure drift detected at ${new Date().toISOString()}
+
+                The following resources have drifted from their Terraform-managed state:
+                
+                ${process.env.DRIFT_DETAILS}
+                
+                Please investigate these changes and:
+                1. If the changes were intentional, update the Terraform configuration
+                2. If the changes were unintentional, run Terraform apply to restore the desired state
+                
+                [View Workflow Run](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})`;
+                
+                // Search for existing open drift issues
+                const issues = await github.rest.issues.listForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  labels: ['drift-detected']
+                });
+                
+                if (issues.data.length > 0) {
+                  // Update existing issue
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issues.data[0].number,
+                    body: issueBody
+                  });
+                } else {
+                  // Create new issue
+                  await github.rest.issues.create({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    title: issueTitle,
+                    body: issueBody,
+                    labels: ['drift-detected', 'infrastructure']
+                  });
+                }
