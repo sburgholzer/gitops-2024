@@ -121,3 +121,4 @@ The code in the ./terraform directory is the starter code for the course. This c
 - created the [.pre-commit-config.yaml](.pre-commit-config.yaml) file
   - added terraform_fmt and terraform_tflint as hooks
   - Would want to potentially add tfsec, tfvalidate, tf_docs, etc for additional checks, but to turn this project in ASAP I did install them
+- Modified [tfdrift.yml](.github/workflows/tfdrift.yml) with help of Google and some AI. It worked as I had deleted the EC2 instance via AWS console, thus causing a drift in Terraform. I temporarily had this workflow set up with a manual innovaction for testing, and it picked up the drift I made and opened an issue!
