@@ -13,4 +13,12 @@ terraform {
 
 provider "aws" {
   region = var.region
+  default_tags {
+    tags = {
+      Environment = "Production" # as we only run apply right now on production ready code
+      Owner       = "Scott"
+      ManagedBy   = "Terraform"
+      Project     = "GitOps MiniCamp"
+    }
+  }
 }
