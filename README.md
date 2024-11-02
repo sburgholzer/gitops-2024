@@ -53,7 +53,7 @@ The code in the ./terraform directory is the starter code for the course. This c
        pull_request:
          branches ['main']
       ```
-    - Changed the environment block under jobs to
+    ~~- Changed the environment block under jobs to
       ```
       ...
       environment: |-
@@ -64,7 +64,7 @@ The code in the ./terraform directory is the starter code for the course. This c
         }}
       ...
       ```
-      This did create a new environment for us to use, however we don't have the `ROLE_TO_ASSUME` secret in this new environment. So added that secret to this new environment. Info found here: [Github Community](https://github.com/orgs/community/discussions/38178).
+      This did create a new environment for us to use, however we don't have the `ROLE_TO_ASSUME` secret in this new environment. So added that secret to this new environment. Info found here: [Github Community](https://github.com/orgs/community/discussions/38178).~~
 
 #### 10/15/24
 - In [terraform.yml](.github/workflows/terraform.yml), changed the default evnironment from staging to development
