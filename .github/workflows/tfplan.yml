@@ -6,6 +6,8 @@ on:
         secrets:
             ROLE_TO_ASSUME:
                 required: true
+            EXPECTED_ACCOUNT_ID:
+                required: true
     
 
 permissions:
