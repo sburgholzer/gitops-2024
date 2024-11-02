@@ -13,11 +13,12 @@ jobs:
             - name: Check Grafana Port Accessibility
               uses: nrukavkov/open-ports-check-action@v1
               id: check_port
+              continue-on-error: true
               with:
                 port: 3000
                 host: '${{ secrets.GRAFANA_IP }}'
                 pause: 1000
-                needFail: 'true'
+                needFail: 'false'
                 reverse: 'false'
             
             - name: Get Formatted Date
@@ -30,11 +31,11 @@ jobs:
               uses: dacbd/create-issue-action@main
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
-                title: "🚨 Garfana Port Inaccessible"
-                labels: garfana,infrastructure,port-inaccessible
+                title: "🚨 Grafana Port Inaccessible"
+                labels: grafana,infrastructure,port-inaccessible
                 body: |
-                    Garfana port inaccessible detected at ${{ steps.date.outputs.date }}
+                    Grafana port inaccessible detected at ${{ steps.date.outputs.date }}
 
-                    The Garfana port 3000 is not accessible. Please check Security Groups, instance status, etc.
-
+                    The Grafana port 3000 is not accessible. Please check Security Groups, instance status, etc.
+                    
                     [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
