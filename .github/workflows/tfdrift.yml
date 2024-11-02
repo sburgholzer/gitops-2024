@@ -4,8 +4,6 @@ on:
     schedule:
         # runs this every hour
         - cron: '0 * * * *'
-    workflow_dispatch: # temporary
-
 jobs:
     # this one checks for instance types
     detect_drift:
@@ -93,59 +91,3 @@ jobs:
                     labels: ['drift-detected', 'infrastructure']
                   });
                 }
-
-
-
-
-
-
-    # # This will check to see if the instance has been
-    # # deleted from AWS not through Terraform
-    # # and creates an issue.
-    # check_instance_exists:
-    #     needs: detect_drift
-    #     runs-on: ubuntu-latest
-    #     permissions:
-    #         id-token: write
-    #         issues: write
-    #     steps:
-    #         - name: checkout
-    #           uses: actions/checkout@v4
-            
-    #         - name: Download plan artifact
-    #           uses: actions/download-artifact@v4
-    #           with:
-    #             name: terraform-plan
-    #             path: /tmp
-            
-    #         - name: Setup OPA
-    #           uses: open-policy-agent/setup-opa@v2
-    #           with:
-    #             version: latest
-            
-    #         - name: Check for drift
-    #           run: |
-    #             opaout=$(opa eval --data ./policies/missing-instance-policy.rego --input /tmp/plan.json "data.terraform.deny" | jq -r '.result[]?.expressions[]?.value[]? // empty')
-    #             echo "drift_message=$opaout" >> $GITHUB_ENV
-    #             if [ ! -z "$opaout" ]; then
-    #               echo "::error::$opaout"
-    #               exit 1
-    #             fi
-            
-    #         - name: Create Issue on Drift Detection
-    #           if: failure()
-    #           env:
-    #             GH_TOKEN: ${{ github.token }}
-    #           run: |
-    #             gh issue create \
-    #             --title "🚨 Infrastructure Drift Detected" \
-    #             --body "$(cat <<EOF
-    #             Infrastructure drift was detected during the automated hourly check.
-
-    #             ${{ env.drift_message }}
-
-    #             [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-    #             EOF
-    #             )"
-              
-    
