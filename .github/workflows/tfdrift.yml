@@ -17,6 +17,7 @@ jobs:
             issues: write
         secrets:
             ROLE_TO_ASSUME: ${{ secrets.ROLE_TO_ASSUME }}
+            EXPECTED_ACCOUNT_ID: ${{ secrets.EXPECTED_ACCOUNT_ID }}
     
     analyze_drift:
       needs: detect_drift
