@@ -21,6 +21,10 @@ jobs:
     
     analyze_drift:
       needs: detect_drift
+      permissions:
+        contents: read
+        id-token: write
+        issues: write
       runs-on: ubuntu-latest
       steps:
         - name: Download Terraform Plan
