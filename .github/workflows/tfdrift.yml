@@ -32,7 +32,7 @@ jobs:
         - name: Analyze Plan
           id: analyze
           run: |
-            PLAN_OUTPUT=$(cat /tmp/terraform-plan)
+            PLAN_OUTPUT=$(cat /tmp/plan.json)
 
             if echo "$PLAN_OUTPUT" | grep -q '"resource_drift":'; then
               echo "DRIFT_DETECTED=true" >> $GITHUB_ENV
