@@ -4,6 +4,7 @@ on:
     schedule:
         # runs this every hour
         - cron: '0 * * * *'
+    workflow_dispatch: # temporary
 
 permissions:
     contents: read
