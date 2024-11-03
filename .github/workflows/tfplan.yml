@@ -106,67 +106,61 @@ jobs:
                 body-includes: '<!-- terraform-plan-comment -->'
                 comment-author: 'github-actions[bot]'
             
-            - name: Extract Plan Info
-              id: plan_info
+            - name: Extract Plan Changes
+              id: plan_changes
               run: |
-                info=$(python3 -c '
-                import json
-                with open("/tmp/plan.json", "r") as f:
-                    plan = json.loads(f.read())
-                  
-                resources = plan["planned_values"]["root_module"]["resources"]
-                info = {
-                    "vpc_cidr": "",
-                    "subnet_cidr": "",
-                    "instance_type": "",
-                    "ami": "",
-                    "security_groups": []
-                }
-                
-                for resource in resources:
-                    if resource["type"] == "aws_vpc":
-                        info["vpc_cidr"] = resource["values"]["cidr_block"]
-                    elif resource["type"] == "aws_subnet":
-                        info["subnet_cidr"] = resource["values"]["cidr_block"]
-                    elif resource["type"] == "aws_security_group":
-                        info["security_groups"].append(resource["values"]["name"])
-                    elif resource["type"] == "aws_instance":
-                        info["instance_type"] = resource["values"]["instance_type"]
-                        info["ami"] = resource["values"]["ami"]
-                
-                print(json.dumps(info))
-                    ')
-                    echo "info=${info}" >> $GITHUB_OUTPUT
-                
-            - name: Create or Update Comment
-              uses: peter-evans/create-or-update-comment@v4
-              if: ${{ !github.event.workflow }}
-              with:
-                 comment-id: ${{ steps.fc.outputs.comment-id }}
-                 issue-number: ${{ github.event.pull_request.number }}
-                 body: |
+               changes=$(jq -r '
+               .resource_changes | reduce .[] as $item (
+                 {"create": 0, "update": 0, "delete": 0, "no-op": 0};
+                 .[$item.change.actions[0]] += 1
+               )' /tmp/plan.json)
+               echo "changes=${changes}" >> $GITHUB_OUTPUT
+          
+            - name: Extract Resource Details
+              id: resource_details
+              run: |
+                details=$(jq -r '
+                .planned_values.root_module.resources | reduce .[] as $res (
+                  {"vpc": "", "subnet": "", "security_group": "", "instance": {}};
+                  if $res.type == "aws_vpc" then
+                    .vpc = $res.values.cidr_block
+                  elif $res.type == "aws_subnet" then
+                    .subnet = $res.values.cidr_block
+                  elif $res.type == "aws_security_group" then
+                    .security_group = $res.values.ingress[0].from_port
+                  elif $res.type == "aws_instance" then
+                    .instance = {
+                      "type": $res.values.instance_type,
+                      "ami": $res.values.ami
+                    }
+                  else . end
+                )' /tmp/plan.json)
+                echo "details=${details}" >> $GITHUB_OUTPUT
+              
+                - name: Create or Update Comment
+                uses: peter-evans/create-or-update-comment@v4
+                if: ${{ !github.event.workflow }}
+                with:
+                  comment-id: ${{ steps.comment_found.outputs.comment-id }}
+                  issue-number: ${{ github.event.pull_request.number }}
+                  body: |
                     <!-- terraform-plan-comment -->
                     ## Terraform Plan Summary 🔍
                     
                     ### Resource Changes
                     | Type | Count |
                     |------|--------|
-                    | Create | ${{ contains(steps.plan.outputs.stdout, '"actions":["create"]') && '✨' || '0' }} |
-                    | Update | ${{ contains(steps.plan.outputs.stdout, '"actions":["update"]') && '🔄' || '0' }} |
-                    | Delete | ${{ contains(steps.plan.outputs.stdout, '"actions":["delete"]') && '🗑️' || '0' }} |
-                    | No Changes | ${{ contains(steps.plan.outputs.stdout, '"actions":["no-op"]') && '✓' || '0' }} |
+                    | Create | ${{ fromJSON(steps.plan_changes.outputs.changes).create }} ✨ |
+                    | Update | ${{ fromJSON(steps.plan_changes.outputs.changes).update }} 🔄 |
+                    | Delete | ${{ fromJSON(steps.plan_changes.outputs.changes).delete }} 🗑️ |
+                    | No Changes | ${{ fromJSON(steps.plan_changes.outputs.changes)['no-op'] }} ✓ |
                     
                     ### Infrastructure Configuration
-                    - VPC: `${{ fromJSON(steps.plan_info.outputs.info).vpc_cidr }}`
-                    - Subnet: `${{ fromJSON(steps.plan_info.outputs.info).subnet_cidr }}`
-                    - Security Groups: `${{ join(fromJSON(steps.plan_info.outputs.info).security_groups, ', ') }}`
-                    - Instance Type: `${{ fromJSON(steps.plan_info.outputs.info).instance_type }}`
-                    - AMI: `${{ fromJSON(steps.plan_info.outputs.info).ami }}`
-                    
-                    ### Validation Results
-                    ```diff
-                    ${{ contains(steps.plan.outputs.stdout, 'validation_success') && '+ ✅ Validation Successful' || '- ❌ Validation Failed' }}
-                    ```
+                    - VPC CIDR: `${{ fromJSON(steps.resource_details.outputs.details).vpc }}`
+                    - Subnet CIDR: `${{ fromJSON(steps.resource_details.outputs.details).subnet }}`
+                    - Security Group Port: `${{ fromJSON(steps.resource_details.outputs.details).security_group }}`
+                    - Instance Type: `${{ fromJSON(steps.resource_details.outputs.details).instance.type }}`
+                    - AMI ID: `${{ fromJSON(steps.resource_details.outputs.details).instance.ami }}`
                     
                     <details>
                     <summary>Show Detailed Changes</summary>
@@ -175,7 +169,7 @@ jobs:
                     ${{ steps.plan.outputs.stdout }}
                     ```
                     </details>
-                 edit-mode: replace
-                 reactions: rocket
+                  edit-mode: replace
+                  reactions: rocket
               
 
