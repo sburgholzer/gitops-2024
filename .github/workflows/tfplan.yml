@@ -28,7 +28,8 @@ jobs:
     terraform:
         name: 'Terraform Plan'
         runs-on: ubuntu-latest
-        environment: ${{ inputs.environment != '' && inputs.environment || github.base_ref }}
+        environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || inputs.environment }}
+
         defaults:
             run:
                 shell: bash
