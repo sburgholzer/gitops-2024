@@ -2,12 +2,21 @@ name: 'Terraform Plan'
 
 on:
     pull_request:
+      branches:
+        - staging
+        - main
     workflow_call:
         secrets:
             ROLE_TO_ASSUME:
                 required: true
             EXPECTED_ACCOUNT_ID:
                 required: true
+        inputs:
+          environment:
+            description: 'Environment to run the workflow in'
+            type: string
+            required: true
+            default: 'production'
     
 
 permissions:
@@ -19,7 +28,8 @@ jobs:
     terraform:
         name: 'Terraform Plan'
         runs-on: ubuntu-latest
-        environment: production
+        environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || inputs.environment }}
+
         defaults:
             run:
                 shell: bash
