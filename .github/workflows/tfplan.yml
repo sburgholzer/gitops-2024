@@ -60,6 +60,7 @@ jobs:
               uses: hashicorp/setup-terraform@v3
             
             - name: Terraform Init
+              id: init
               run: |
                 terraform init \
                 -backend-config="bucket=${TF_VAR_BACKEND_BUCKET}" \
@@ -94,3 +95,36 @@ jobs:
               run: |
                 opaout=$(opa eval --data ../policies/instance-policy.rego --input /tmp/plan.json "data.terraform.deny" | jq -r '.result[].expressions[].value[]')
                     [ -z "$opaout" ] && exit 0 || echo "$opaout" && gh pr comment ${{ github.event.pull_request.number }} --body "### $opaout" && exit 1
+
+            - name: Find PR Comment
+              uses: peter-evans/find-comment@v3
+              id: comment_found
+              if: ${{ !github.event.workflow }}
+              with:
+                token: ${{ secrets.GITHUB_TOKEN }}
+                issue-number: ${{ github.event.pull_request.number }}
+                body-includes: '<!-- terraform-plan-comment -->'
+                comment-author: 'github-actions[bot]'
+            
+            - name: Create or Update Comment
+              uses: peter-evans/create-or-update-comment@v4
+              if: ${{ !github.event.workflow }}
+              with:
+                token: ${{ secrets.GITHUB_TOKEN }}
+                comment-id: ${{ steps.comment_found.outputs.comment-id }}
+                issue-number: ${{ github.event.pull_request.number }}
+                body: |
+                  <!-- terraform-plan-comment -->
+                  ## Terraform Plan Results 🔍
+                  
+                  ### Initialization Status
+                  ```
+                  ${{ steps.init.outputs.stdout }}
+                  ```
+                  
+                  ### Plan Output
+                  ```hcl
+                  ${{ steps.plan.outputs.stdout }}
+                  ```
+                edit-mode: replace
+
