@@ -5,6 +5,9 @@ on:
         - cron: '*/15 * * * *'
     workflow_dispatch:
 
+permissions:
+  issues: write
+  
 jobs:
     check-grafana:
         runs-on: ubuntu-latest
