@@ -130,3 +130,8 @@ The code in the ./terraform directory is the starter code for the course. This c
 #### 11/2/24
 - added [garfana_port.yml](.github/workflows/garfana_port.yml) to check if the port for Garfana is accessible.
 - RE: drift detection and garfana port, I thought there were two options, to fail the workflow if there is a drift/port problem, or succeed the workflow. As I am creating issues within the two workflows, I decided I'd make the workflow be successful as long as it followed all the steps without issue since we would be opening an issue in GitHub for the workflows. If I were not opening these issues, then I would of made the workflows fail.
+
+#### 11/3/24
+- Finished [garfana_port.yml](.github/workflows/garfana_port.yml)
+- Found a way to add comments to existing issues (port check and drift check) and not keep creating duplicate issues
+- Updated workflows to run in different environments

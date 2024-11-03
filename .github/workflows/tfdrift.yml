@@ -10,9 +10,8 @@ permissions:
     id-token: write
     pull-requests: write
     issues: write
-    actions: read    # Add this permission
-    checks: write   # Add this permission
-
+    actions: read
+    checks: write
 jobs:
     # this one checks for instance types
     detect_drift:
@@ -25,6 +24,8 @@ jobs:
         secrets:
             ROLE_TO_ASSUME: ${{ secrets.ROLE_TO_ASSUME }}
             EXPECTED_ACCOUNT_ID: ${{ secrets.EXPECTED_ACCOUNT_ID }}
+        with:
+          environment: 'production'
     
     analyze_drift:
       needs: detect_drift
@@ -32,6 +33,7 @@ jobs:
         contents: read
         issues: write
       runs-on: ubuntu-latest
+      environment: production
       steps:
         - name: Download Terraform Plan
           uses: actions/download-artifact@v4

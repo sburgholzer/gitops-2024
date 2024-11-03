@@ -2,7 +2,7 @@ name: Check Grafana Port
 
 on:
     schedule:
-        - cron: '*/15 * * * *'
+        - cron: '0 * * * *'
     workflow_dispatch:
 
 permissions:
@@ -12,6 +12,7 @@ permissions:
 jobs:
     check-grafana:
         runs-on: ubuntu-latest
+        environment: production
 
         steps:
             - name: Check Grafana Port Accessibility
