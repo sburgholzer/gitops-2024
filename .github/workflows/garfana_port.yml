@@ -40,7 +40,7 @@ jobs:
                 labels: grafana,infrastructure,port-inaccessible
             
             - name: Create Issue If The Port Is Not Accessible
-              if: steps.check_port.outputs.result != 'true' && steps.last_issue.outputes.has-found != 'true'
+              if: steps.check_port.outputs.result != 'true' && steps.last_issue.outputs.has-found != 'true'
               uses: dacbd/create-issue-action@main
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
@@ -61,4 +61,5 @@ jobs:
                 issue-number: ${{ steps.last_issue.outputs.issue-number }}
                 body: |
                     Still inaccessible at ${{ steps.date.outputs.date }}
+
                     [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
