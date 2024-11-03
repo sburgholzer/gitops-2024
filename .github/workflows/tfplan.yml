@@ -137,13 +137,13 @@ jobs:
                 )' /tmp/plan.json)
                 echo "details=${details}" >> $GITHUB_OUTPUT
               
-                - name: Create or Update Comment
-                uses: peter-evans/create-or-update-comment@v4
-                if: ${{ !github.event.workflow }}
-                with:
-                  comment-id: ${{ steps.comment_found.outputs.comment-id }}
-                  issue-number: ${{ github.event.pull_request.number }}
-                  body: |
+            - name: Create or Update Comment
+              uses: peter-evans/create-or-update-comment@v4
+              if: ${{ !github.event.workflow }}
+              with:
+                 comment-id: ${{ steps.comment_found.outputs.comment-id }}
+                 issue-number: ${{ github.event.pull_request.number }}
+                 body: |
                     <!-- terraform-plan-comment -->
                     ## Terraform Plan Summary 🔍
                     
@@ -169,7 +169,7 @@ jobs:
                     ${{ steps.plan.outputs.stdout }}
                     ```
                     </details>
-                  edit-mode: replace
-                  reactions: rocket
+                 edit-mode: replace
+                 reactions: rocket
               
 
