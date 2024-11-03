@@ -109,41 +109,37 @@ jobs:
             - name: Extract Plan Changes
               id: plan_changes
               run: |
-               changes=$(jq -r '
-               .resource_changes | reduce .[] as $item (
-                 {"create": 0, "update": 0, "delete": 0, "no-op": 0};
-                 .[$item.change.actions[0]] += 1
-               )' /tmp/plan.json)
-               echo "changes=${changes}" >> $GITHUB_OUTPUT
-          
+                changes=$(jq -r '
+                {
+                  create: ([.resource_changes[] | select(.change.actions[0]=="create")] | length),
+                  update: ([.resource_changes[] | select(.change.actions[0]=="update")] | length),
+                  delete: ([.resource_changes[] | select(.change.actions[0]=="delete")] | length),
+                  "no-op": ([.resource_changes[] | select(.change.actions[0]=="no-op")] | length)
+                }' /tmp/plan.json)
+                echo "changes=${changes}" >> $GITHUB_OUTPUT
+
             - name: Extract Resource Details
               id: resource_details
               run: |
                 details=$(jq -r '
-                .planned_values.root_module.resources | reduce .[] as $res (
-                  {"vpc": "", "subnet": "", "security_group": "", "instance": {}};
-                  if $res.type == "aws_vpc" then
-                    .vpc = $res.values.cidr_block
-                  elif $res.type == "aws_subnet" then
-                    .subnet = $res.values.cidr_block
-                  elif $res.type == "aws_security_group" then
-                    .security_group = $res.values.ingress[0].from_port
-                  elif $res.type == "aws_instance" then
-                    .instance = {
-                      "type": $res.values.instance_type,
-                      "ami": $res.values.ami
-                    }
-                  else . end
-                )' /tmp/plan.json)
+                {
+                  vpc: (.planned_values.root_module.resources[] | select(.type=="aws_vpc") | .values.cidr_block),
+                  subnet: (.planned_values.root_module.resources[] | select(.type=="aws_subnet") | .values.cidr_block),
+                  security_group: (.planned_values.root_module.resources[] | select(.type=="aws_security_group") | .values.ingress[0].from_port),
+                  instance: {
+                    type: (.planned_values.root_module.resources[] | select(.type=="aws_instance") | .values.instance_type),
+                    ami: (.planned_values.root_module.resources[] | select(.type=="aws_instance") | .values.ami)
+                  }
+                }' /tmp/plan.json)
                 echo "details=${details}" >> $GITHUB_OUTPUT
               
             - name: Create or Update Comment
               uses: peter-evans/create-or-update-comment@v4
               if: ${{ !github.event.workflow }}
               with:
-                 comment-id: ${{ steps.comment_found.outputs.comment-id }}
-                 issue-number: ${{ github.event.pull_request.number }}
-                 body: |
+                  comment-id: ${{ steps.comment_found.outputs.comment-id }}
+                  issue-number: ${{ github.event.pull_request.number }}
+                  body: |
                     <!-- terraform-plan-comment -->
                     ## Terraform Plan Summary 🔍
                     
@@ -169,7 +165,5 @@ jobs:
                     ${{ steps.plan.outputs.stdout }}
                     ```
                     </details>
-                 edit-mode: replace
-                 reactions: rocket
-              
-
+                  edit-mode: replace
+                  reactions: rocket
