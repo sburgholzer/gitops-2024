@@ -2,10 +2,13 @@ name: Lint
 
 on:
   pull_request:
-
+    branches:
+        - staging
+        - production
 
 jobs:
   tflint:
+    environment: ${{ github.base_ref }}
     runs-on: ${{ matrix.os }}
     defaults:
         run:
