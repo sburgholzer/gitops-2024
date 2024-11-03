@@ -5,6 +5,10 @@ on:
         - cron: '*/15 * * * *'
     workflow_dispatch:
 
+permissions:
+  issues: write
+  contents: read
+
 jobs:
     check-grafana:
         runs-on: ubuntu-latest
@@ -13,11 +17,12 @@ jobs:
             - name: Check Grafana Port Accessibility
               uses: nrukavkov/open-ports-check-action@v1
               id: check_port
+              continue-on-error: true
               with:
                 port: 3000
                 host: '${{ secrets.GRAFANA_IP }}'
                 pause: 1000
-                needFail: 'true'
+                needFail: 'false'
                 reverse: 'false'
             
             - name: Get Formatted Date
@@ -25,16 +30,36 @@ jobs:
               run: |
                 echo "date=$(TZ='America/Chicago' date +'%m-%d-%y %I:%M %p %Z')" >> $GITHUB_OUTPUT
             
+            - name: Find Existing Issue
+              if: steps.check_port.outputs.result != 'true'
+              uses: micalevisk/last-issue-action@v2
+              id: last_issue
+              with:
+                token: ${{ secrets.GITHUB_TOKEN }}
+                state: open
+                labels: grafana,infrastructure,port-inaccessible
+            
             - name: Create Issue If The Port Is Not Accessible
-              if: steps.check_port.outcome == 'failure'
+              if: steps.check_port.outputs.result != 'true' && steps.last_issue.outputs.has-found != 'true'
               uses: dacbd/create-issue-action@main
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
-                title: "🚨 Garfana Port Inaccessible"
-                labels: garfana,infrastructure,port-inaccessible
+                title: "🚨 Grafana Port Inaccessible"
+                labels: grafana,infrastructure,port-inaccessible
                 body: |
-                    Garfana port inaccessible detected at ${{ steps.date.outputs.date }}
+                    Grafana port inaccessible detected at ${{ steps.date.outputs.date }}
 
-                    The Garfana port 3000 is not accessible. Please check Security Groups, instance status, etc.
+                    The Grafana port 3000 is not accessible. Please check Security Groups, instance status, etc.
+                    
+                    [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            - name: Add Comment If Issue Exists
+              if: steps.check_port.outputs.result != 'true' && steps.last_issue.outputs.has-found == 'true'
+              uses: peter-evans/create-or-update-comment@v4
+              with:
+                token: ${{ secrets.GITHUB_TOKEN }}
+                issue-number: ${{ steps.last_issue.outputs.issue-number }}
+                body: |
+                    Still inaccessible at ${{ steps.date.outputs.date }}
 
                     [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})

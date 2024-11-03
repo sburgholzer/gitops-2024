@@ -1,14 +1,18 @@
-# GitOps with Terraform 2024 Starter Code
+# GitOps with Terraform Mini-Camp 2024
 
-## Cloudformation
+This repo is a project completed during GitOps with Terraform Mini-Camp 2024 put on by [Derek Morgan]() and assisted by [Andrew Brown](). There was starter code provided by Derek at [Original Repo from More Than Certified](https://github.com/morethancertified/gitops-minicamp-2024-tf). However there were intentional bugs within it, and we were to add much more functionality to it (via GitHub Actions). Some documentation/workflow decisions will follow this section, then followed by a journal of my daily activities while working on this project.
+
+## Documentation
+
+### Cloudformation
 
 The code in the ./cloudformation directory is optional. It is to configure the OIDC role used to authenticate your GitHub Actions workflows to AWS. 
 
-## Terraform
+### Terraform
 
 The code in the ./terraform directory is the starter code for the course. This code isn't perfect, and that's intentional! You may need to make modifications to ensure it is reliable and resilient. 
 
-[Original Repo from More Than Certified](https://github.com/morethancertified/gitops-minicamp-2024-tf)
+
 
 ## Workflows
 
@@ -122,3 +126,7 @@ The code in the ./terraform directory is the starter code for the course. This c
   - added terraform_fmt and terraform_tflint as hooks
   - Would want to potentially add tfsec, tfvalidate, tf_docs, etc for additional checks, but to turn this project in ASAP I did install them
 - Modified [tfdrift.yml](.github/workflows/tfdrift.yml) with help of Google and some AI. It worked as I had deleted the EC2 instance via AWS console, thus causing a drift in Terraform. I temporarily had this workflow set up with a manual innovaction for testing, and it picked up the drift I made and opened an issue!
+
+#### 11/2/24
+- added [garfana_port.yml](.github/workflows/garfana_port.yml) to check if the port for Garfana is accessible.
+- RE: drift detection and garfana port, I thought there were two options, to fail the workflow if there is a drift/port problem, or succeed the workflow. As I am creating issues within the two workflows, I decided I'd make the workflow be successful as long as it followed all the steps without issue since we would be opening an issue in GitHub for the workflows. If I were not opening these issues, then I would of made the workflows fail.
