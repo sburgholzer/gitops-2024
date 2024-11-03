@@ -83,6 +83,7 @@ jobs:
               
               ${{ env.DRIFT_DETAILS }}
               
+
               [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             
         - name: Add Comment If Issue Exists
