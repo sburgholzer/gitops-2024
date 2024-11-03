@@ -24,6 +24,8 @@ jobs:
         secrets:
             ROLE_TO_ASSUME: ${{ secrets.ROLE_TO_ASSUME }}
             EXPECTED_ACCOUNT_ID: ${{ secrets.EXPECTED_ACCOUNT_ID }}
+        with:
+          environment: 'production'
     
     analyze_drift:
       needs: detect_drift

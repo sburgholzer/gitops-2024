@@ -11,6 +11,12 @@ on:
                 required: true
             EXPECTED_ACCOUNT_ID:
                 required: true
+        inputs:
+          environment:
+            description: 'Environment to run the workflow in'
+            type: string
+            required: true
+            default: 'production'
     
 
 permissions:
@@ -22,7 +28,7 @@ jobs:
     terraform:
         name: 'Terraform Plan'
         runs-on: ubuntu-latest
-        environment: ${{ github.base_ref }}
+        environment: ${{ inputs.environment != '' && inputs.environment || github.base_ref }}
         defaults:
             run:
                 shell: bash
