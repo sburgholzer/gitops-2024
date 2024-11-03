@@ -8,7 +8,7 @@ on:
 
 jobs:
   tflint:
-    environment: ${{ github.base_ref }}
+    environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
     runs-on: ${{ matrix.os }}
     defaults:
         run:
