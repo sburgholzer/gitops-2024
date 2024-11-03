@@ -27,7 +27,7 @@ jobs:
                 echo "date=$(TZ='America/Chicago' date +'%m-%d-%y %I:%M %p %Z')" >> $GITHUB_OUTPUT
             
             - name: Create Issue If The Port Is Not Accessible
-              if: steps.check_port.outcome == 'failure'
+              if: steps.check_port.outputs.result != 'true'
               uses: dacbd/create-issue-action@main
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
