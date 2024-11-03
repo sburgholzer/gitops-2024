@@ -106,25 +106,76 @@ jobs:
                 body-includes: '<!-- terraform-plan-comment -->'
                 comment-author: 'github-actions[bot]'
             
+            - name: Extract Plan Info
+              id: plan_info
+              run: |
+                info=$(python3 -c '
+                import json
+                with open("/tmp/plan.json", "r") as f:
+                    plan = json.loads(f.read())
+                  
+                resources = plan["planned_values"]["root_module"]["resources"]
+                info = {
+                    "vpc_cidr": "",
+                    "subnet_cidr": "",
+                    "instance_type": "",
+                    "ami": "",
+                    "security_groups": []
+                }
+                
+                for resource in resources:
+                    if resource["type"] == "aws_vpc":
+                        info["vpc_cidr"] = resource["values"]["cidr_block"]
+                    elif resource["type"] == "aws_subnet":
+                        info["subnet_cidr"] = resource["values"]["cidr_block"]
+                    elif resource["type"] == "aws_security_group":
+                        info["security_groups"].append(resource["values"]["name"])
+                    elif resource["type"] == "aws_instance":
+                        info["instance_type"] = resource["values"]["instance_type"]
+                        info["ami"] = resource["values"]["ami"]
+                
+                print(json.dumps(info))
+                    ')
+                    echo "info=${info}" >> $GITHUB_OUTPUT
+                
             - name: Create or Update Comment
               uses: peter-evans/create-or-update-comment@v4
               if: ${{ !github.event.workflow }}
               with:
-                token: ${{ secrets.GITHUB_TOKEN }}
-                comment-id: ${{ steps.comment_found.outputs.comment-id }}
-                issue-number: ${{ github.event.pull_request.number }}
-                body: |
-                  <!-- terraform-plan-comment -->
-                  ## Terraform Plan Results 🔍
-                  
-                  ### Initialization Status
-                  ```
-                  ${{ steps.init.outputs.stdout }}
-                  ```
-                  
-                  ### Plan Output
-                  ```hcl
-                  ${{ steps.plan.outputs.stdout }}
-                  ```
-                edit-mode: replace
+                 comment-id: ${{ steps.fc.outputs.comment-id }}
+                 issue-number: ${{ github.event.pull_request.number }}
+                 body: |
+                    <!-- terraform-plan-comment -->
+                    ## Terraform Plan Summary 🔍
+                    
+                    ### Resource Changes
+                    | Type | Count |
+                    |------|--------|
+                    | Create | ${{ contains(steps.plan.outputs.stdout, '"actions":["create"]') && '✨' || '0' }} |
+                    | Update | ${{ contains(steps.plan.outputs.stdout, '"actions":["update"]') && '🔄' || '0' }} |
+                    | Delete | ${{ contains(steps.plan.outputs.stdout, '"actions":["delete"]') && '🗑️' || '0' }} |
+                    | No Changes | ${{ contains(steps.plan.outputs.stdout, '"actions":["no-op"]') && '✓' || '0' }} |
+                    
+                    ### Infrastructure Configuration
+                    - VPC: `${{ fromJSON(steps.plan_info.outputs.info).vpc_cidr }}`
+                    - Subnet: `${{ fromJSON(steps.plan_info.outputs.info).subnet_cidr }}`
+                    - Security Groups: `${{ join(fromJSON(steps.plan_info.outputs.info).security_groups, ', ') }}`
+                    - Instance Type: `${{ fromJSON(steps.plan_info.outputs.info).instance_type }}`
+                    - AMI: `${{ fromJSON(steps.plan_info.outputs.info).ami }}`
+                    
+                    ### Validation Results
+                    ```diff
+                    ${{ contains(steps.plan.outputs.stdout, 'validation_success') && '+ ✅ Validation Successful' || '- ❌ Validation Failed' }}
+                    ```
+                    
+                    <details>
+                    <summary>Show Detailed Changes</summary>
+                    
+                    ```hcl
+                    ${{ steps.plan.outputs.stdout }}
+                    ```
+                    </details>
+                 edit-mode: replace
+                 reactions: rocket
+              
 
