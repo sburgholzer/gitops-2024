@@ -7,7 +7,7 @@ on:
 
 jobs:
     check-grafana:
-        runs-on: ubutnu-latest
+        runs-on: ubuntu-latest
 
         steps:
             - name: Check Grafana Port Accessibility
