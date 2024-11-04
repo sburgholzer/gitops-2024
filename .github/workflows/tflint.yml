@@ -82,12 +82,10 @@ jobs:
     - name: Create or Update Comment
       uses: peter-evans/create-or-update-comment@v4
       with:
-        issue-number: ${{ github.event.pull_request.number }}
-        body: |
-          ${{ env.tflint_message }}
-        comment-id: ${{ steps.comment_found.outputs.comment-id }}
-        edit-mode: replace
-        token: ${{ secrets.GITHUB_TOKEN }}
+         token: ${{ secrets.GITHUB_TOKEN }}
+         issue-number: ${{ steps.comment_found.outputs.comment-id }}
+         body: |
+            ${{ env.tflint_message }}
       
     - name: Final Status Check
       if: always()
