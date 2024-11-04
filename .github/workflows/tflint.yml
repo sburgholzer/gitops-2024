@@ -91,7 +91,7 @@ jobs:
         echo "TFLint Message Content:"
         echo "${{ env.tflint_message }}"
     
-        # - name: Create or Update Comment
+    # - name: Create or Update Comment
     #   uses: peter-evans/create-or-update-comment@v4
     #   with:
     #     token: ${{ secrets.GITHUB_TOKEN }}
