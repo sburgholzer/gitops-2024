@@ -5,15 +5,39 @@ on:
     branches:
             - staging
             - main
-    paths:
-      - '**.tf'
-      - '**.tfvars'
-      - '**.tfvars.json'
-      
+     
+permissions:
+    contents: read
+    checks: write
+
 jobs:
+  check-terraform-changes:
+    name: Check Terraform Changes
+    runs-on: ubuntu-latest
+    outputs:
+      has_tf_changes: ${{ steps.check-tf.outputs.has_changes }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Get Changed Files
+        uses: tj-actions/changed-files@v40
+      - name: Check for Terraform Changes
+        id: check-tf
+        run: |
+          changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
+          if echo "$changed_files" | grep -q '\.tf\|\.tfvars\|\.tfvars\.json'; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
   infracost-pull-request-checks:
+    needs: check-terraform-changes
     name: Infracost Pull Request Checks
-    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize')
+    if: |
+      needs.check-terraform-changes.outputs.has_tf_changes == 'true' && 
+      github.event_name == 'pull_request' && 
+      (github.event.action == 'opened' || github.event.action == 'synchronize')
     runs-on: ubuntu-latest
     environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
     permissions:
@@ -65,4 +89,26 @@ jobs:
                          --policy-path=policies/cost.rego
 
 
-  
+  auto-approve-no-tf-changes:
+    needs: check-terraform-changes
+    name: Auto Approve if no Terraform Changes
+    if: needs.check-terraform-changes.outputs.has_tf_changes == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Success Status Check
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Infracost Check',
+              head_sha: context.sha,
+              status: 'completed',
+              conclusion: 'success',
+              output: {
+                title: 'No Terraform Changes',
+                summary: 'No Terraform files were modified in this PR - skipping Infracost check'
+              }
+            });
