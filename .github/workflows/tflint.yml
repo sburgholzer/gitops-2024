@@ -73,6 +73,13 @@ jobs:
 
     - name: Find and Update PR Comment
       run: |
+        # Ensure we have content to post even if the report file doesn't exist
+        if [ ! -f "tflint_report.md" ]; then
+          echo "### TFLint Results :mag:" > tflint_report.md
+          echo "" >> tflint_report.md
+          echo "⚠️ Error: TFLint analysis failed to generate a report" >> tflint_report.md
+        fi
+
         # Get existing comments
         COMMENTS=$(curl -s \
           -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -82,7 +89,7 @@ jobs:
         # Look for existing TFLint comment using proper jq filtering
         COMMENT_ID=$(echo "$COMMENTS" | jq -r '.[] | select(.user.login=="github-actions[bot]") | select(.body | startswith("### TFLint Results")) | .id')
         
-        # Prepare the comment body
+        # Read the report content
         BODY=$(cat tflint_report.md)
         
         if [ -n "$COMMENT_ID" ]; then
@@ -100,6 +107,7 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
             -d "{\"body\":$(echo "$BODY" | jq -R -s .)}"
         fi
+
     
     - name: Final Status Check
       if: always()
