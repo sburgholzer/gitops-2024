@@ -1,6 +1,9 @@
 name: 'Terraform Apply'
 
-on: workflow_dispatch
+# on: workflow_dispatch
+on:
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
@@ -9,6 +12,11 @@ permissions:
 jobs:
   terraform:
     name: 'Terraform Apply Flow'
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, 'apply') && 
+      (github.event.comment.author_association == 'OWNER' || 
+      github.event.comment.author_association == 'ADMIN')
     runs-on: ubuntu-latest
     environment: production
     defaults:
@@ -27,6 +35,10 @@ jobs:
       TF_VAR_expected_account_id: ${{ secrets.EXPECTED_ACCOUNT_ID }}
     
     steps:
+      - name: Get PR Details
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+
       # Configure AWS Creds
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -59,3 +71,34 @@ jobs:
       # Run Terraform Apply
       - name: Terraform Apply
         run: terraform apply -input=false -auto-approve
+
+      - name: Get Grafana IP
+        if: success()
+        id: grafana-ip
+        run: |
+          GRAFANA_IP=$(terraform output -raw grafana_server_ip)
+          echo "grafana_ip=${GRAFANA_IP}" >> $GITHUB_OUTPUT
+        
+      - name: Create Grafana IP Secret
+        if: success()
+        uses: gliech/create-github-secret-action@v1
+        with:
+          name: GRAFANA_IP
+          value: ${{ steps.grafana-ip.outputs.grafana_ip }}
+          pa_token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const success = '${{ job.status }}' === 'success';
+            const body = `Terraform Apply: ${success ? '✅ Succeeded' : '❌ Failed'}
+            Run details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
