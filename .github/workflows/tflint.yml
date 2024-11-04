@@ -83,7 +83,7 @@ jobs:
       uses: peter-evans/create-or-update-comment@v4
       with:
         issue-number: ${{ github.event.pull_request.number }}
-        body-path: tflint_message.txt
+        body: ${{ env.tflint_message }}
         comment-id: ${{ steps.comment_found.outputs.comment-id }}
         edit-mode: replace
         token: ${{ secrets.GITHUB_TOKEN }}
