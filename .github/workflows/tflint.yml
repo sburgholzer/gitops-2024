@@ -1,108 +1,82 @@
 name: Lint
-
 on:
   pull_request:
-    branches:
-      - staging
-      - main
-
-permissions:
-  contents: read
-  pull-requests: write
-  checks: write
+      branches:
+        - staging
+        - main
 
 jobs:
   tflint:
-    name: TFLint
-    runs-on: ubuntu-latest
+    environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
+    runs-on: ${{ matrix.os }}
     defaults:
-      run:
-        working-directory: ./terraform
-    env:
-        TF_VAR_BACKEND_BUCKET: ${{ vars.BUCKET_NAME }}
-        TF_VAR_BACKEND_KEY: ${{ vars.STATE_KEY }}
-        TF_VAR_BACKEND_REGION: ${{ vars.REGION }}
-        TF_VAR_BACKEND_DYNAMODB_TABLE: ${{ vars.DYNAMODB_NAME }}
-        TF_VAR_instance_type: ${{ vars.INSTANCE_TYPE }}
-        TF_VAR_region: ${{ vars.REGION }}
-        TF_VAR_expected_region: ${{ vars.EXPECTED_REGION }}
-        TF_VAR_expected_account_id: ${{ secrets.EXPECTED_ACCOUNT_ID }}
+        run:
+            working-directory: ./terraform
 
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      name: Checkout source code
+
+    - uses: actions/cache@v4
+      name: Cache plugin dir
+      with:
+        path: ~/.tflint.d/plugins
+        key: ${{ matrix.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
+
+    - uses: terraform-linters/setup-tflint@v4
+      name: Setup TFLint
+      with:
+        tflint_version: v0.52.0
+
+    - name: Show version
+      run: tflint --version
+
+    - name: Init TFLint
+      run: tflint --init
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Run TFLint
+      run: |
+        # create output dir
+        mkdir -p tflint_output
+
+        # run TFLint asking for JSON output and save the JSON and exit code
+        tflint -f json | tee tflint_output/results.json
+        exit_code=${PIPESTATUS[0]}
+
+        # Parse results and create formatted message
+        echo "MESSAGE<<EOF" >> $GITHUB_ENV
+        echo "### TFLint Analysis Results :mag:" >> $GITHUB_ENV
+
+        ISSUES=$(jq -r '.issues | length' tflint_output_results.json)
+        if [ $ISSUES -eq 0 ]; then
+          echo "✅ No issues found" >> $GITHUB_ENV
+        else
+          echo "⚠️ Found $ISSUES issue(s)" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"' tflint_output/results.json >> $GITHUB_ENV
+        fi
+        echo "EOF" >> $GITHUB_ENV
+
+        exit $exit_code
       
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
-          aws-region: ${{ vars.REGION }}
-      
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        
-      - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: v0.52.0
-          tflint_wrapper_enabled: true
-      
-      - name: Terraform Init
-        id: init
-        run: |
-          terraform init \
-          -backend-config="bucket=${TF_VAR_BACKEND_BUCKET}" \
-          -backend-config="key=${TF_VAR_BACKEND_KEY}" \
-          -backend-config="region=${TF_VAR_BACKEND_REGION}" \
-          -backend-config="encrypt=true" \
-          -backend-config="dynamodb_table=${TF_VAR_BACKEND_DYNAMODB_TABLE}"
+    - name: Post Comment
+      if: always()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const message = process.env.MESSAGE;
 
-      - name: Run TFLint
-        id: tflint
-        run: tflint --format=checkstyle --call-module-type==all
-        continue-on-error: true
-      
-      - name: Post TFLint Results
-        uses: reviewdog/action-tflint@v1
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-review
-          filter_mode: nofilter
-          fail_on_error: true
-          working_directory: "."
-          tflint_init: true
-          flags: "--call-module-type=all"
-
-      - name: Add Detailed Comment
-        if: always()
-        uses: phoenix-actions/opentofu-pr-commenter@v1
-        with:
-          commenter_type: tflint
-          commenter_input: ${{ format('{0}{1}', steps.tflint.outputs.stdout, steps.tflint.outputs.stderr) }}
-          commenter_exitcode: ${{ steps.tflint.outputs.exitcode }}
-     
-      
-
-
-
-    
-    
-    
-    # Below was the initial code just for the check, but now
-    # we are using a github action that uses TFLint and creates a comment on the PR
-    # - uses: terraform-linters/setup-tflint@v4
-    #   name: Setup TFLint
-    #   with:
-    #     tflint_version: v0.52.0
-
-    # - name: Show version
-    #   run: tflint --version
-
-    # - name: Init TFLint
-    #   run: tflint --init
-    #   env:
-    #     GITHUB_TOKEN: ${{ github.token }}
-
-    # - name: Run TFLint
-    #   run: tflint -f compact
+          // Post new comment
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: message
+          });
     
