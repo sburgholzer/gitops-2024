@@ -91,11 +91,12 @@ jobs:
       #     value: ${{ steps.grafana-ip.outputs.grafana_ip }}
       #     pa_token: ${{ secrets.PAT }}
 
-      #- name: Update repository variable
-      #  run: |
-      #    gh variable set GRAFANA_IP ${{ steps.grafana_ip.outputs.grafana_ip }}
-      #  env:
-      #    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # not working.. so for now I'm manually updating the IP repo variable
+      # - name: Update repository variable
+      #   run: |
+      #     gh variable set GRAFANA_IP "${{ steps.grafana-ip.outputs.grafana_ip }}"
+      #   env:
+      #     GH_TOKEN: ${{ secrets.PAT }}
 
       - name: Comment on PR
         uses: actions/github-script@v7

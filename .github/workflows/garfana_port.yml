@@ -3,11 +3,11 @@ name: Check Grafana Port
 on:
     schedule:
         - cron: '0 * * * *'
-    workflow_dispatch:
 
 permissions:
   issues: write
   contents: read
+  actions: write
 
 jobs:
     check-grafana:
@@ -19,14 +19,11 @@ jobs:
               id: check_port
               continue-on-error: true
               run: |
-                if curl -f -s -o /dev/null http://${{ secrets.GRAFANA_IP }}:3000; then
+                if curl -f -s -o /dev/null ${{ vars.GRAFANA_IP }}; then
                   echo "result=true" >> $GITHUB_OUTPUT
                 else
                   echo "result=false" >> $GITHUB_OUTPUT
                 fi
-            - name: Debug Secret (Remove in production)
-              run: |
-                echo "Testing connection to: ${{ vars.GRAFANA_IP }}"
             
             - name: Get Formatted Date
               id: date
