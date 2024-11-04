@@ -15,6 +15,7 @@ jobs:
   tflint:
     name: runner / tflint
     runs-on: ubuntu-latest
+    environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
