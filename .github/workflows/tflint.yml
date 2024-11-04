@@ -89,6 +89,7 @@ jobs:
           ### Errors:
           - **Error**: Unable to parse TFLint output
             - Raw Output: ${OUTPUT}
+          "
         fi
         
         echo "$MESSAGE"
