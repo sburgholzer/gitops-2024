@@ -3,7 +3,6 @@ name: Check Grafana Port
 on:
     schedule:
         - cron: '0 * * * *'
-    workflow_dispatch:
 
 permissions:
   issues: write
