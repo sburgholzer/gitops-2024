@@ -48,22 +48,28 @@ jobs:
       run: |
         OUTPUT=$(tflint -f json)
         TFLINT_EXIT_CODE=$?
+          
+        # Create the message content
+        MESSAGE="### TFLint Analysis Results :mag:
         
-        echo "MESSAGE<<EOF" >> $GITHUB_ENV
-        echo "### TFLint Analysis Results :mag:" >> $GITHUB_ENV
-        
+        "
+          
         ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
         if [ $ISSUES -eq 0 ]; then
-          echo "✅ No issues found" >> $GITHUB_ENV
+          MESSAGE+="✅ No issues found"
         else
-          echo "⚠️ Found $ISSUES issue(s)" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "$OUTPUT" | jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"' >> $GITHUB_ENV
+          MESSAGE+="⚠️ Found $ISSUES issue(s)
+         
+          "
+          MESSAGE+=$(echo "$OUTPUT" | jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"')
         fi
-        echo "EOF" >> $GITHUB_ENV
-        
+          
+        # Store the message in a file
+        echo "$MESSAGE" > tflint_message.txt
+          
+        # Store exit code for later use
         echo "tflint_exit_code=$TFLINT_EXIT_CODE" >> $GITHUB_ENV
-    
+  
     - name: Find Comment
       uses: peter-evans/find-comment@v3
       id: comment_found
@@ -71,19 +77,20 @@ jobs:
         issue-number: ${{ github.event.pull_request.number }}
         comment-author: 'github-actions[bot]'
         body-includes: "TFLint Analysis Results"
-
+        token: ${{ secrets.GITHUB_TOKEN }}
+  
     - name: Create or Update Comment
       uses: peter-evans/create-or-update-comment@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
         issue-number: ${{ github.event.pull_request.number }}
-        body: ${{ env.MESSAGE }}
+        body-path: tflint_message.txt
         comment-id: ${{ steps.comment_found.outputs.comment-id }}
-    
+        edit-mode: replace
+        token: ${{ secrets.GITHUB_TOKEN }}
+      
     - name: Final Status Check
       if: always()
       run: |
         if [ "${{ env.tflint_exit_code }}" != "0" ]; then
           exit 1
         fi
-    
