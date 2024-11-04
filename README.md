@@ -1,30 +1,132 @@
 # GitOps with Terraform Mini-Camp 2024
 
-This repo is a project completed during GitOps with Terraform Mini-Camp 2024 put on by [Derek Morgan]() and assisted by [Andrew Brown](). There was starter code provided by Derek at [Original Repo from More Than Certified](https://github.com/morethancertified/gitops-minicamp-2024-tf). However there were intentional bugs within it, and we were to add much more functionality to it (via GitHub Actions). Some documentation/workflow decisions will follow this section, then followed by a journal of my daily activities while working on this project.
+This repository contains the completed project from the GitOps with Terraform Mini-Camp 2024, led by Derek Morgan and Andrew Brown. While starter code was provided by Derek at [Original Repo from More Than Certified](https://github.com/morethancertified/gitops-minicamp-2024-tf), the project involved fixing intentional bugs and implementing additional functionality through GitHub Actions.
 
-## Documentation
+## Table of Contents
+- [GitOps with Terraform Mini-Camp 2024](#gitops-with-terraform-mini-camp-2024)
+  * [Project Structure](#project-structure)
+    + [CloudFormation](#cloudformation)
+    + [Terraform](#terraform)
+    + [Policies](#policies)
+  * [GitHub Actions Workflows](#github-actions-workflows)
+    + [Core Workflows](#core-workflows)
+    + [Validation Workflows](#validation-workflows)
+  * [Merging Strategy](#merging-strategy)
+  * [Pre-commit Configuration](#pre-commit-configuration)
+    + [Installation](#installation)
+    + [Configured Hooks](#configured-hooks)
+  * [Environment Configuration](#environment-configuration)
+    + [Main Branch Protection](#main-branch-protection)
+  * [Contributing](#contributing)
+  * [Development Journal](#development-journal)
+      - [10/13/24](#10-13-24)
+      - [10/14/24](#10-14-24)
+      - [10/15/24](#10-15-24)
+      - [10/22/24](#10-22-24)
+      - [10/26/24](#10-26-24)
+      - [11/1/24](#11-1-24)
+      - [11/2/24](#11-2-24)
+      - [11/3/24](#11-3-24)
 
-### Cloudformation
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
-The code in the ./cloudformation directory is optional. It is to configure the OIDC role used to authenticate your GitHub Actions workflows to AWS. 
+## Project Structure
+
+### CloudFormation
+- **OIDC Configuration**: Contains templates for configuring AWS OIDC authentication for GitHub Actions
+- **Backend Resources**: Templates for creating S3 bucket and DynamoDB table for Terraform state management
 
 ### Terraform
+- Infrastructure as Code implementation 
+- Modified starter code with improvements for reliability and resilience
+- Implements state management using S3 backend with DynamoDB locking
 
-The code in the ./terraform directory is the starter code for the course. This code isn't perfect, and that's intentional! You may need to make modifications to ensure it is reliable and resilient. 
+### Policies
+- **cost.rego**: OPA policy to enforce cost limits
+- **instance-policy.rego**: Controls allowed EC2 instance types
+
+## GitHub Actions Workflows
+
+### Core Workflows
+- **tfplan.yml**: Runs terraform plan, saves the JSON and if it's a PR running it, create a comment with changes
+  - GitHub Actions Used:
+    - [configure-aws-credentials@v4](https://github.com/aws-actions/configure-aws-credentials)
+    - [actions/checkout@v4](https://github.com/actions/checkout)
+    - [hashicorp/setup-terraform@v3](https://github.com/hashicorp/setup-terraform)
+    - [actions/upload-artifact@v4](https://github.com/actions/upload-artifact)
+    - [open-policy-agent/setup-opa@v2](https://github.com/open-policy-agent/setup-opa)
+    - [borchero/terraform-plan-comment@v2](https://github.com/borchero/terraform-plan-comment)
+- **tfapply.yml**: This workflow runs when the repo owner or an admin comments the word "apply" to a PR to the main branch
+  - GitHub Actions Used:
+    - [xt0rted/pull-request-comment-branch@v2](https://github.com/xt0rted/pull-request-comment-branch)
+    - [configure-aws-credentials@v4](https://github.com/aws-actions/configure-aws-credentials)
+    - [actions/checkout@v4](https://github.com/actions/checkout)
+    - [hashicorp/setup-terraform@v3](https://github.com/hashicorp/setup-terraform)
+    - [gliech/create-github-secret-action@v1](https://github.com/gliech/create-github-secret-action)
+    - [actions/github-script@v7](https://github.com/actions/github-script)
+- **tfdestroy.yml**: Manual workflow for infrastructure destruction
+  - GitHub Actions Used:
+    - [configure-aws-credentials@v4](https://github.com/aws-actions/configure-aws-credentials)
+    - [actions/checkout@v4](https://github.com/actions/checkout)
+    - [hashicorp/setup-terraform@v3](https://github.com/hashicorp/setup-terraform)
+
+### Validation Workflows
+- **tflint.yml**: Code linting with PR feedback
+  - GitHub Actions Used:
+    - [actions/checkout@v4](https://github.com/actions/checkout)
+    - [actions/cache@v4](https://github.com/actions/cache)
+    - [terraform-linters/setup-tflint@v4](https://github.com/terraform-linters/setup-tflint)
+    - [peter-evans/find-comment@v3](https://github.com/peter-evans/find-comment)
+    - [peter-evans/create-or-update-comment@v4](https://github.com/peter-evans/create-or-update-comment)
+- **infracost.yml**: Cost analysis with OPA policy enforcement
+  - GitHub Actions Used: 
+    - [infracost/actions/setup@v3](https://github.com/infracost/actions/tree/v3/setup)
+    - [actions/checkout@v4](https://github.com/actions/checkout)
+    - [open-policy-agent/setup-opa@v2](https://github.com/open-policy-agent/setup-opa)
+- **tfdrift.yml**: Infrastructure drift detection on a schedule
+  - GitHub Actions Used:
+    - [tfplan.yml](.github/workflows/tfplan.yml)
+    - [actions/download-artifact@v4](https://github.com/actions/download-artifact)
+    - [micalevisk/last-issue-action@v2](https://github.com/micalevisk/last-issue-action)
+    - [dacbd/create-issue-action@main](https://github.com/dacbd/create-issue-action/tree/main/)
+    - [peter-evans/create-or-update-comment@v4](https://github.com/peter-evans/create-or-update-comment)
+- **grafana_port.yml**: Port accessibility monitoring on a schedule
+  - GitHub Actions Used:
+    - [nrukavkov/open-ports-check-action@v1](https://github.com/nrukavkov/open-ports-check-action)
+    - [micalevisk/last-issue-action@v2](https://github.com/micalevisk/last-issue-action)
+    - [dacbd/create-issue-action@main](https://github.com/dacbd/create-issue-action/tree/main/)
+    - [peter-evans/create-or-update-comment@v4](https://github.com/peter-evans/create-or-update-comment)
+
+## Merging Strategy
+The merging strategy is apply before merge. The main branch of this repo is the source of truth. That's basically to say that is the stable branch, and it only is updated once checks pass and other potential reviews are done. So we create a PR to merge into the main branch, and three required checks (infracost, tflint, terraform plan) need to pass in order for a PR to be considered. Once the PR is passing and otherwise passes review of the maintainer(s), an apply is ran on the PR then it is merged once that apply is successful.
+
+## Pre-commit Configuration
+
+### Installation
+```bash
+pip install pre-commit
+pre-commit install
+```
+### Configured Hooks
+- terraform_fmt
+- terraform_tflint
+
+## Environment Configuration
+
+### Main Branch Protection
+- Required PR reviews
+- Required status checks
+- Automated validation
+
+## Contributing
+1. Create feature branch from development
+2. Submit PR with proposed changes
+3. Ensure all checks pass
+4. Request review
 
 
 
-## Workflows
-
-### GitHub Actions used in terraform.yml
-[terraform.yml](.github/workflows/terraform.yml)
-
-- [aws-actions/configure-aws-credentials@v4](https://github.com/aws-actions/configure-aws-credentials/tree/v4/)
-- [actions/checkout@v4](https://github.com/actions/checkout/tree/v4/)
-- [hashicorp/setup-terraform@v3](https://github.com/hashicorp/setup-terraform/tree/v3/)
-
-
-## Journal of activities taken
+## Development Journal
 #### 10/13/24
 
 - the `required_version` was missing in [versions.tf](terraform/versions.tf), and thus causing linter to fail. 
@@ -131,10 +233,13 @@ The code in the ./terraform directory is the starter code for the course. This c
 - added [garfana_port.yml](.github/workflows/garfana_port.yml) to check if the port for Garfana is accessible.
 - RE: drift detection and garfana port, I thought there were two options, to fail the workflow if there is a drift/port problem, or succeed the workflow. As I am creating issues within the two workflows, I decided I'd make the workflow be successful as long as it followed all the steps without issue since we would be opening an issue in GitHub for the workflows. If I were not opening these issues, then I would of made the workflows fail.
 
-#### 11/3/24
+#### 11/3/24 into early morning hours of 11/4/24
 - Finished [garfana_port.yml](.github/workflows/garfana_port.yml)
 - Found a way to add comments to existing issues (port check and drift check) and not keep creating duplicate issues
 - Updated workflows to run in different environments
 - Implemented running on different environments
 - Updated [tfplan.yml](.github/workflows/tfplan.yml) to comment useful info to the PR
 - Updated [tflint.yml](.github/workflows/tflint.yml) to comment useful info to the PR
+- Updated [tfapply.yml](.github/workflows/tfapply.yml) to run only when repo owner or admin types apply in a PR request
+- Tidy up and finish README documentation
+- Submitted for grading
