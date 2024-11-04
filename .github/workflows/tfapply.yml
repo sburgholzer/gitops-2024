@@ -9,7 +9,7 @@ permissions:
   contents: read
   id-token: write
   issues: read
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   terraform:
@@ -78,7 +78,7 @@ jobs:
         if: success()
         id: grafana-ip
         run: |
-          GRAFANA_IP=$(terraform output -raw grafana_server_ip)
+          GRAFANA_IP=$(terraform output grafana_ip)
           echo "grafana_ip=${GRAFANA_IP}" >> $GITHUB_OUTPUT
         
       - name: Create Grafana IP Secret
