@@ -60,6 +60,7 @@ jobs:
               uses: hashicorp/setup-terraform@v3
             
             - name: Terraform Init
+              id: init
               run: |
                 terraform init \
                 -backend-config="bucket=${TF_VAR_BACKEND_BUCKET}" \
@@ -74,8 +75,8 @@ jobs:
             - name: Terraform Plan
               id: plan
               run: |
-                terraform plan -out=plan.tfplan
-                terraform show -json plan.tfplan > /tmp/plan.json
+                terraform plan -out=tfplan
+                terraform show -json tfplan > /tmp/plan.json
                 cat /tmp/plan.json
             
             - name: upload Plan Artifact
@@ -94,3 +95,11 @@ jobs:
               run: |
                 opaout=$(opa eval --data ../policies/instance-policy.rego --input /tmp/plan.json "data.terraform.deny" | jq -r '.result[].expressions[].value[]')
                     [ -z "$opaout" ] && exit 0 || echo "$opaout" && gh pr comment ${{ github.event.pull_request.number }} --body "### $opaout" && exit 1
+            
+            - name: Post Terraform Plan Comment
+              uses: borchero/terraform-plan-comment@v2
+              if: ${{ !github.event.workflow }}
+              with:
+                token: ${{ secrets.GITHUB_TOKEN }}
+                planfile: tfplan
+                working-directory: ./terraform

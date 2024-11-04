@@ -135,3 +135,4 @@ The code in the ./terraform directory is the starter code for the course. This c
 - Finished [garfana_port.yml](.github/workflows/garfana_port.yml)
 - Found a way to add comments to existing issues (port check and drift check) and not keep creating duplicate issues
 - Updated workflows to run in different environments
+- Implemented running on different environments
