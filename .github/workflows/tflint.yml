@@ -47,49 +47,60 @@ jobs:
       continue-on-error: true
       run: |
         # Run TFLint and capture output
-        OUTPUT=$(tflint -f json 2>&1)
-        EXIT_CODE=$?
+        echo "Running TFLint..."
+        OUTPUT=$(tflint -f json 2>&1) || true
+        echo "TFLint Output: $OUTPUT"
         
         # Create message header
         MESSAGE="### TFLint Results :mag:
 
+        ### Issues:
         "
             
-            # Process Issues
-            MESSAGE="${MESSAGE}### Issues:
+            # Check if OUTPUT is valid JSON
+            if echo "$OUTPUT" | jq . >/dev/null 2>&1; then
+              echo "Valid JSON output from TFLint"
+              
+              # Process Issues
+              ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
+              if [ $ISSUES -eq 0 ]; then
+                MESSAGE="${MESSAGE}✅ No issues found
+
         "
-            ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
-            if [ $ISSUES -eq 0 ]; then
-              MESSAGE="${MESSAGE}✅ No issues found
+              else
+                ISSUES_TEXT=$(echo "$OUTPUT" | jq -r '.issues[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
+                MESSAGE="${MESSAGE}${ISSUES_TEXT}"
+              fi
+              
+              # Process Errors
+              MESSAGE="${MESSAGE}### Errors:
         "
+              ERRORS=$(echo "$OUTPUT" | jq -r '.errors | length')
+              if [ $ERRORS -eq 0 ]; then
+                MESSAGE="${MESSAGE}✅ No errors found"
+              else
+                ERRORS_TEXT=$(echo "$OUTPUT" | jq -r '.errors[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
+                MESSAGE="${MESSAGE}${ERRORS_TEXT}"
+              fi
             else
-              ISSUES_TEXT=$(echo "$OUTPUT" | jq -r '.issues[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
-              MESSAGE="${MESSAGE}${ISSUES_TEXT}"
-            fi
-            
-            # Process Errors
-            MESSAGE="${MESSAGE}
+              echo "Invalid JSON output from TFLint"
+              MESSAGE="${MESSAGE}Error running TFLint. Invalid output received.
+
         ### Errors:
+        - **Error**: Unable to parse TFLint output
+          - Raw output: ${OUTPUT}
         "
-            ERRORS=$(echo "$OUTPUT" | jq -r '.errors | length')
-            if [ $ERRORS -eq 0 ]; then
-              MESSAGE="${MESSAGE}✅ No errors found
-        "
-            else
-              ERRORS_TEXT=$(echo "$OUTPUT" | jq -r '.errors[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
-              MESSAGE="${MESSAGE}${ERRORS_TEXT}"
             fi
             
             # Debug print
-            echo "Debug - Message content:"
+            echo "=== Debug - Message content ==="
             echo "$MESSAGE"
+            echo "=== End Debug ==="
             
             # Store message in environment variable
-            {
-              echo 'tflint_message<<EOF'
-              echo "$MESSAGE"
-              echo 'EOF'
-            } >> $GITHUB_ENV
+            echo "tflint_message<<EOF" >> $GITHUB_ENV
+            echo "$MESSAGE" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
 
     - name: Find Comment
       id: found_comment
