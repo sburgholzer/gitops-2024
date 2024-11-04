@@ -74,13 +74,13 @@ jobs:
           message:"${MESSAGE}#### Errors:
           "
 
-          ERRORS=$(echo "$OUTPUT" | jq -r '.errors | length')
-          if [ $ERRORS -eq 0 ]; then
-            MESSAGE="${MESSAGE}✅ No errors found"
-          else
-            ERRORS_TEXT=$(echo "$OUTPUT" | jq -r '.errors[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
-            MESSAGE="${MESSAGE}${ERRORS_TEXT}"
-          fi
+          # ERRORS=$(echo "$OUTPUT" | jq -r '.errors | length')
+          # if [ $ERRORS -eq 0 ]; then
+          #   MESSAGE="${MESSAGE}✅ No errors found"
+          # else
+          #   ERRORS_TEXT=$(echo "$OUTPUT" | jq -r '.errors[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
+          #   MESSAGE="${MESSAGE}${ERRORS_TEXT}"
+          # fi
         fi
         
         echo "$MESSAGE"
