@@ -49,21 +49,24 @@ jobs:
         OUTPUT=$(tflint -f json)
         TFLINT_EXIT_CODE=$?
         
-        # Create message and save to file in current directory
-        {
-          echo "### TFLint Analysis Results :mag:"
-          echo
-          ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
-          if [ $ISSUES -eq 0 ]; then
-            echo "✅ No issues found"
-          else
-            echo "⚠️ Found $ISSUES issue(s)"
-            echo
-            echo "$OUTPUT" | jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"'
-          fi
-        } > tflint_message.txt
+        # Create message and save to output
+        MESSAGE="### TFLint Analysis Results :mag:
+  
+        "
+        ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
+        if [ $ISSUES -eq 0 ]; then
+          MESSAGE+="✅ No issues found"
+        else
+          MESSAGE+="⚠️ Found $ISSUES issue(s)
+  
+          "
+          MESSAGE+=$(echo "$OUTPUT" | jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"')
+        fi
           
-        # Store exit code for later use
+        # Store message and exit code
+        echo "tflint_message<<EOF" >> $GITHUB_ENV
+        echo "$MESSAGE" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
         echo "tflint_exit_code=$TFLINT_EXIT_CODE" >> $GITHUB_ENV
   
 
