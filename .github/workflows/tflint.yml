@@ -53,8 +53,8 @@ jobs:
 
         # Create message header
         MESSAGE="### TFLint Results :mag:
-          ### Issues:
-          "
+        ### Issues:
+        "
         
         echo "$MESSAGE"
     
