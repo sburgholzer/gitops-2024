@@ -35,10 +35,6 @@ jobs:
           }
           EOF
 
-      - name: terraform init
-        working-directory: ./terraform
-        run: terraform init
-
       - name: tflint
         uses: reviewdog/action-tflint@v1
         with:
