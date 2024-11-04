@@ -5,7 +5,11 @@ on:
     branches:
             - staging
             - main
-      
+     
+permissions:
+    contents: read
+    checks: write
+
 jobs:
   check-terraform-changes:
     name: Check Terraform Changes
