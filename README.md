@@ -92,7 +92,7 @@ This repository contains the completed project from the GitOps with Terraform Mi
     - [peter-evans/create-or-update-comment@v4](https://github.com/peter-evans/create-or-update-comment)
 - **grafana_port.yml**: Port accessibility monitoring on a schedule
   - GitHub Actions Used:
-    - [nrukavkov/open-ports-check-action@v1](https://github.com/nrukavkov/open-ports-check-action)
+    - ~~[nrukavkov/open-ports-check-action@v1](https://github.com/nrukavkov/open-ports-check-action)~~ Didn't work as expected, changed method just to get around this issue for now.
     - [micalevisk/last-issue-action@v2](https://github.com/micalevisk/last-issue-action)
     - [dacbd/create-issue-action@main](https://github.com/dacbd/create-issue-action/tree/main/)
     - [peter-evans/create-or-update-comment@v4](https://github.com/peter-evans/create-or-update-comment)
