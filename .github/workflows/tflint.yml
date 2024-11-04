@@ -78,7 +78,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         issue-number: ${{ github.event.pull_request.number }}
         body: ${{ env.MESSAGE }}
-        comment-id: ${{ steps.fc.outputs.comment-id }}
+        comment-id: ${{ steps.comment_found.outputs.comment-id }}
     
     - name: Final Status Check
       if: always()
