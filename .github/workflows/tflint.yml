@@ -41,42 +41,31 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
 
     - name: Run TFLint
+      id: tflint
       run: |
-        # create output dir
-        mkdir -p tflint_output
-
-        # run TFLint asking for JSON output and save the JSON and exit code
-        tflint -f json | tee tflint_output/results.json
-        exit_code=${PIPESTATUS[0]}
-
-        # Parse results and create formatted message
+        set +e
+        OUTPUT=$(tflint -f json)
+        TFLINT_EXIT_CODE=$?
+        
         echo "MESSAGE<<EOF" >> $GITHUB_ENV
         echo "### TFLint Analysis Results :mag:" >> $GITHUB_ENV
-
-        ISSUES=$(jq -r '.issues | length' tflint_output_results.json)
+        
+        ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
         if [ $ISSUES -eq 0 ]; then
           echo "✅ No issues found" >> $GITHUB_ENV
         else
           echo "⚠️ Found $ISSUES issue(s)" >> $GITHUB_ENV
           echo "" >> $GITHUB_ENV
-          jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"' tflint_output/results.json >> $GITHUB_ENV
+          echo "$OUTPUT" | jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"' >> $GITHUB_ENV
         fi
         echo "EOF" >> $GITHUB_ENV
-
-        exit $exit_code
+        
+        exit $TFLINT_EXIT_CODE
       
-    - name: Post Comment
-      if: always()
-      uses: actions/github-script@v6
+    - name: Create Comment
+      uses: peter-evans/create-or-update-comment@v4
       with:
-        script: |
-          const message = process.env.MESSAGE;
-
-          // Post new comment
-          await github.rest.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-            body: message
-          });
+        token: ${{ secrets.GITHUB_TOKEN }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: ${{ env.MESSAGE }}
     
