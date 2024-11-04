@@ -4,13 +4,10 @@ on:
       branches:
         - staging
         - main
-      paths:
-        - '**.tf'
-        - '**.tfvars'
-        - '**.tfvars.json'
 permissions:
     contents: read
     pull-requests: write
+    checks: write
 jobs:
   tflint:
     environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
