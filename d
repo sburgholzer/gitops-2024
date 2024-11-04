@@ -3,7 +3,7 @@ name: Check Grafana Port
 on:
     schedule:
         - cron: '0 * * * *'
-    workflow_dispatch:
+    workflow_dispatch:  # Allows manual triggering
 
 permissions:
   issues: write
@@ -54,12 +54,4 @@ jobs:
                     [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             
             - name: Add Comment If Issue Exists
-              if: steps.check_port.outputs.result != 'true' && steps.last_issue.outputs.has-found == 'true'
-              uses: peter-evans/create-or-update-comment@v4
-              with:
-                token: ${{ secrets.GITHUB_TOKEN }}
-                issue-number: ${{ steps.last_issue.outputs.issue-number }}
-                body: |
-                    Still inaccessible at ${{ steps.date.outputs.date }}
-
-                    [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              if: steps.check_port.outputs.result !=
