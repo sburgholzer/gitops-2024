@@ -53,8 +53,23 @@ jobs:
 
         # Create message header
         MESSAGE="### TFLint Results :mag:
+        
         ### Issues:
         "
+
+        # Check if OUTPUT is valid JSON
+        if echo "$OUTPUT" | jq . >/dev/null 2>&1; then
+          echo "Valid JSON output from TFLint"
+          
+          # Process Issues
+          ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
+          if [ $ISSUES -eq 0 ]; then
+            MESSAGE="${MESSAGE}✅ No issues found
+            "
+          else
+            ISSUES_TEXT=$(echo "$OUTPUT" | jq -r '.issues[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
+            MESSAGE="${MESSAGE}${ISSUES_TEXT}"
+          fi
         
         echo "$MESSAGE"
     
