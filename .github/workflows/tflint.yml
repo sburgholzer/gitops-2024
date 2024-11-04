@@ -48,22 +48,24 @@ jobs:
       run: |
         OUTPUT=$(tflint -f json)
         TFLINT_EXIT_CODE=$?
-          
-        # Create message directly in the working directory
-        cat << EOF > "${GITHUB_WORKSPACE}/tflint_message.txt"
-        ### TFLint Analysis Results :mag:
-  
-        $(if [ "$(echo "$OUTPUT" | jq -r '.issues | length')" -eq 0 ]; then
-         echo "✅ No issues found"
-        else
-          echo "⚠️ Found $(echo "$OUTPUT" | jq -r '.issues | length') issue(s)"
+        
+        # Create message and save to file in current directory
+        {
+          echo "### TFLint Analysis Results :mag:"
           echo
-          echo "$OUTPUT" | jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"'
-        fi)
-        EOF
+          ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
+          if [ $ISSUES -eq 0 ]; then
+            echo "✅ No issues found"
+          else
+            echo "⚠️ Found $ISSUES issue(s)"
+            echo
+            echo "$OUTPUT" | jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"'
+          fi
+        } > tflint_message.txt
           
         # Store exit code for later use
         echo "tflint_exit_code=$TFLINT_EXIT_CODE" >> $GITHUB_ENV
+  
 
     - name: Find Comment
       uses: peter-evans/find-comment@v3
@@ -78,8 +80,7 @@ jobs:
       uses: peter-evans/create-or-update-comment@v4
       with:
         issue-number: ${{ github.event.pull_request.number }}
-        body-path: ${GITHUB_WORKSPACE}/tflint_message.txt
-        
+        body-path: tflint_message.txt
         comment-id: ${{ steps.comment_found.outputs.comment-id }}
         edit-mode: replace
         token: ${{ secrets.GITHUB_TOKEN }}
