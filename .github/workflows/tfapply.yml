@@ -80,7 +80,9 @@ jobs:
         run: |
           GRAFANA_IP=$(terraform output grafana_ip)
           echo "grafana_ip=${GRAFANA_IP}" >> $GITHUB_OUTPUT
-        
+
+      # Neither of these two steps work as intended, so for now manually updating
+      # the repo variables to the IP...
       # - name: Create Grafana IP Secret
       #   if: success()
       #   uses: gliech/create-github-secret-action@v1
@@ -89,11 +91,11 @@ jobs:
       #     value: ${{ steps.grafana-ip.outputs.grafana_ip }}
       #     pa_token: ${{ secrets.PAT }}
 
-      - name: Update repository variable
-        run: |
-          gh variable set GRAFANA_IP ${{ steps.grafana_ip.outputs.grafana_ip }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #- name: Update repository variable
+      #  run: |
+      #    gh variable set GRAFANA_IP ${{ steps.grafana_ip.outputs.grafana_ip }}
+      #  env:
+      #    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Comment on PR
         uses: actions/github-script@v7
