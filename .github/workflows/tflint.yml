@@ -14,7 +14,6 @@ permissions:
 jobs:
   tflint:
     name: TFLint
-    environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,11 +24,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup TFLint
-        id: tflint
         uses: terraform-linters/setup-tflint@v4
         with:
           tflint_version: v0.52.0
-          tflint_wrapper: true
 
       - name: Create TFLint config
         run: |
@@ -47,20 +44,22 @@ jobs:
           EOF
 
       - name: Run TFLint
-        id: run-tflint
+        id: tflint-run
         run: |
           tflint --init
-          tflint --format compact
+          OUTPUT=$(tflint --format compact 2>&1) || true
+          echo "TFLINT_OUTPUT<<EOF" >> $GITHUB_ENV
+          echo "$OUTPUT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Post TFLint Comment
-        if: always()
         uses: GetTerminus/terraform-pr-commenter@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           commenter_type: tflint
-          commenter_input: ${{ format('{0}{1}', steps.run-tflint.outputs.stdout, steps.run-tflint.outputs.stderr) }}
-          commenter_exitcode: ${{ steps.run-tflint.outputs.exitcode }}
+          commenter_input: ${{ env.TFLINT_OUTPUT }}
+          commenter_exitcode: ${{ steps.tflint-run.outcome == 'success' && '0' || '1' }}
 
 
 
