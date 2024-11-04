@@ -24,6 +24,9 @@ jobs:
                 else
                   echo "result=false" >> $GITHUB_OUTPUT
                 fi
+            - name: Debug Secret (Remove in production)
+              run: |
+                echo "Testing connection to: ${{ secrets.GRAFANA_IP }}"
             
             - name: Get Formatted Date
               id: date
