@@ -75,8 +75,8 @@ jobs:
             - name: Terraform Plan
               id: plan
               run: |
-                terraform plan -out=plan.tfplan
-                terraform show -json plan.tfplan > /tmp/plan.json
+                terraform plan -out=tfplan
+                terraform show -json tfplan > /tmp/plan.json
                 cat /tmp/plan.json
             
             - name: upload Plan Artifact
@@ -95,75 +95,11 @@ jobs:
               run: |
                 opaout=$(opa eval --data ../policies/instance-policy.rego --input /tmp/plan.json "data.terraform.deny" | jq -r '.result[].expressions[].value[]')
                     [ -z "$opaout" ] && exit 0 || echo "$opaout" && gh pr comment ${{ github.event.pull_request.number }} --body "### $opaout" && exit 1
-
-            - name: Find PR Comment
-              uses: peter-evans/find-comment@v3
-              id: comment_found
+            
+            - name: Post Terraform Plan Comment
+              uses: borchero/terraform-plan-comment@v2
               if: ${{ !github.event.workflow }}
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
-                issue-number: ${{ github.event.pull_request.number }}
-                body-includes: '<!-- terraform-plan-comment -->'
-                comment-author: 'github-actions[bot]'
-            
-            - name: Extract Plan Changes
-              id: plan_changes
-              run: |
-                changes=$(jq -r '
-                {
-                  create: ([.resource_changes[] | select(.change.actions[0]=="create")] | length),
-                  update: ([.resource_changes[] | select(.change.actions[0]=="update")] | length),
-                  delete: ([.resource_changes[] | select(.change.actions[0]=="delete")] | length),
-                  "no-op": ([.resource_changes[] | select(.change.actions[0]=="no-op")] | length)
-                }' /tmp/plan.json)
-                echo "changes=${changes}" >> $GITHUB_OUTPUT
-
-            - name: Extract Resource Details
-              id: resource_details
-              run: |
-                details=$(jq -r '
-                {
-                  vpc: (.planned_values.root_module.resources[] | select(.type=="aws_vpc") | .values.cidr_block),
-                  subnet: (.planned_values.root_module.resources[] | select(.type=="aws_subnet") | .values.cidr_block),
-                  security_group: (.planned_values.root_module.resources[] | select(.type=="aws_security_group") | .values.ingress[0].from_port),
-                  instance: {
-                    type: (.planned_values.root_module.resources[] | select(.type=="aws_instance") | .values.instance_type),
-                    ami: (.planned_values.root_module.resources[] | select(.type=="aws_instance") | .values.ami)
-                  }
-                }' /tmp/plan.json)
-                echo "details=${details}" >> $GITHUB_OUTPUT
-              
-            - name: Create or Update Comment
-              uses: peter-evans/create-or-update-comment@v4
-              if: ${{ !github.event.workflow }}
-              with:
-                  comment-id: ${{ steps.comment_found.outputs.comment-id }}
-                  issue-number: ${{ github.event.pull_request.number }}
-                  body: |
-                    <!-- terraform-plan-comment -->
-                    ## Terraform Plan Summary 🔍
-                    
-                    ### Resource Changes
-                    | Type | Count |
-                    |------|--------|
-                    | Create | ${{ fromJSON(steps.plan_changes.outputs.changes).create }} ✨ |
-                    | Update | ${{ fromJSON(steps.plan_changes.outputs.changes).update }} 🔄 |
-                    | Delete | ${{ fromJSON(steps.plan_changes.outputs.changes).delete }} 🗑️ |
-                    | No Changes | ${{ fromJSON(steps.plan_changes.outputs.changes)['no-op'] }} ✓ |
-                    
-                    ### Infrastructure Configuration
-                    - VPC CIDR: `${{ fromJSON(steps.resource_details.outputs.details).vpc }}`
-                    - Subnet CIDR: `${{ fromJSON(steps.resource_details.outputs.details).subnet }}`
-                    - Security Group Port: `${{ fromJSON(steps.resource_details.outputs.details).security_group }}`
-                    - Instance Type: `${{ fromJSON(steps.resource_details.outputs.details).instance.type }}`
-                    - AMI ID: `${{ fromJSON(steps.resource_details.outputs.details).instance.ami }}`
-                    
-                    <details>
-                    <summary>Show Detailed Changes</summary>
-                    
-                    ```hcl
-                    ${{ steps.plan.outputs.stdout }}
-                    ```
-                    </details>
-                  edit-mode: replace
-                  reactions: rocket
+                planfile: tfplan
+                working-directory: ./terraform
