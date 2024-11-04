@@ -62,7 +62,7 @@ jobs:
         fi
         echo "EOF" >> $GITHUB_ENV
         
-        exit $TFLINT_EXIT_CODE
+        echo "tflint_exit_code=$TFLINT_EXIT_CODE" >> $GITHUB_ENV
     
     - name: Find Comment
       uses: peter-evans/find-comment@v3
@@ -79,4 +79,11 @@ jobs:
         issue-number: ${{ github.event.pull_request.number }}
         body: ${{ env.MESSAGE }}
         comment-id: ${{ steps.fc.outputs.comment-id }}
+    
+    - name: Final Status Check
+      if: always()
+      run: |
+        if [ "${{ env.tflint_exit_code }}" != "0" ]; then
+          exit 1
+        fi
     
