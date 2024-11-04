@@ -64,6 +64,7 @@ jobs:
           ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
           if [ $ISSUES -eq 0 ]; then
             MESSAGE="${MESSAGE}✅ No issues found
+
             "
           else
             ISSUES_TEXT=$(echo "$OUTPUT" | jq -r '.issues[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
@@ -81,6 +82,13 @@ jobs:
             ERRORS_TEXT=$(echo "$OUTPUT" | jq -r '.errors[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
             MESSAGE="${MESSAGE}${ERRORS_TEXT}"
           fi
+        else
+          echo "Invalid JSON output from TFLint"
+          MESSAGE="${MESSAGE}Error running TFLint. Invalid output received.
+
+          ### Errors:
+          - **Error**: Unable to parse TFLint output
+            - Raw Output: ${OUTPUT}
         fi
         
         echo "$MESSAGE"
