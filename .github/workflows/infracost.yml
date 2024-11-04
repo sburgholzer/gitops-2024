@@ -6,33 +6,10 @@ on:
             - staging
             - main
 jobs:
-  check-terraform-changes:
-    name: Check Terraform Changes
-    runs-on: ubuntu-latest
-    outputs:
-      has_tf_changes: ${{ steps.check-tf.outputs.has_changes }}
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-      - name: Get Changed Files
-        uses: tj-actions/changed-files@v40
-      - name: Check for Terraform Changes
-        id: check-tf
-        run: |
-          changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
-          if echo "$changed_files" | grep -q '\.tf\|\.tfvars\|\.tfvars\.json'; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          fi
 
   infracost-pull-request-checks:
-    needs: check-terraform-changes
     name: Infracost Pull Request Checks
-    if: |
-      needs.check-terraform-changes.outputs.has_tf_changes == 'true' && 
-      github.event_name == 'pull_request' && 
-      (github.event.action == 'opened' || github.event.action == 'synchronize')
+    if: (github.event.action == 'opened' || github.event.action == 'synchronize')
     runs-on: ubuntu-latest
     environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
     permissions:
