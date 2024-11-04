@@ -92,14 +92,20 @@ jobs:
           "
         fi
         
+        echo "=== Debut - Message content ==="
         echo "$MESSAGE"
+        echo "=== End Debug ==="
+
+        echo "tflint_message<<EOF" >> $GITHUB_ENV
+        echo "$MESSAGE" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
     
-    # - name: Debug TFLint Message
-    #   run: |
-    #     echo "TFLint Message Content:"
-    #     echo "${{ env.tflint_message }}"
-    #     echo "---"
-    #     printenv tflint_message
+    - name: Debug TFLint Message
+      run: |
+        echo "TFLint Message Content:"
+        echo "${{ env.tflint_message }}"
+        echo "---"
+        printenv tflint_message
 
     - name: Find Comment
       id: found_comment
