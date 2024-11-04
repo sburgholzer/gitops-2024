@@ -6,7 +6,7 @@ on:
     types: [created]
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
   issues: read
   pull-requests: write
@@ -87,7 +87,7 @@ jobs:
         with:
           name: GRAFANA_IP
           value: ${{ steps.grafana-ip.outputs.grafana_ip }}
-          pa_token: ${{ secrets.GITHUB_TOKEN }}
+          pa_token: ${{ secrets.PAT }}
       
       - name: Comment on PR
         uses: actions/github-script@v7
