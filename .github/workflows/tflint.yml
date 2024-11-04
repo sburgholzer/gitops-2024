@@ -50,35 +50,41 @@ jobs:
         OUTPUT=$(tflint -f json 2>&1)
         EXIT_CODE=$?
         
-        # Format the message
-        echo "### TFLint Results :mag:" > tflint_report.md
-        echo "" >> tflint_report.md
+        # Create message header
+        MESSAGE="### TFLint Results :mag:\n\n"
         
-        if [ $EXIT_CODE -eq 0 ]; then
-          echo "✅ No issues found" >> tflint_report.md
+        # Process Issues
+        MESSAGE+="### Issues:\n"
+        ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
+        if [ $ISSUES -eq 0 ]; then
+          MESSAGE+="✅ No issues found\n"
         else
-          ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
-          echo "⚠️ Found ${ISSUES} issue(s)" >> tflint_report.md
-          echo "" >> tflint_report.md
-          echo "$OUTPUT" | jq -r '.issues[] | "* **\(.rule.name)** in `\(.range.filename)`:\n  * \(.message)\n  * Line: \(.range.start.line)"' >> tflint_report.md
+          MESSAGE+=$(echo "$OUTPUT" | jq -r '.issues[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
         fi
         
-        # Save report content to environment variable
-        echo "report<<EOF" >> $GITHUB_ENV
-        cat tflint_report.md >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+        # Process Errors
+        MESSAGE+="\n### Errors:\n"
+        ERRORS=$(echo "$OUTPUT" | jq -r '.errors | length')
+        if [ $ERRORS -eq 0 ]; then
+          MESSAGE+="✅ No errors found\n"
+        else
+          MESSAGE+=$(echo "$OUTPUT" | jq -r '.errors[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
+        fi
         
-        # Set exit code for later use
-        echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+        # Store message and exit code
+        echo "tflint_message<<EOF" >> $GITHUB_ENV
+        echo "$MESSAGE" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        echo "tflint_exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
 
-    - name: Find and Update PR Comment
-      run: |
-        # Create new comment
-        curl -s -X POST \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-          -d "{\"body\":$(echo "${{ env.report }}" | jq -R -s .)}"
+        - name: Find and Update PR Comment
+          run: |
+            # Create new comment
+            curl -s -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+              -d "{\"body\":$(echo "${{ env.report }}" | jq -R -s .)}"
 
     
     - name: Final Status Check
