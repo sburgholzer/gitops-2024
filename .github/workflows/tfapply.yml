@@ -91,9 +91,9 @@ jobs:
 
       - name: Update repository variable
         run: |
-          gh variable set GRAFANA_IP ${{ steps.grafana_ip.outputs.grafana_ip }}
+          gh variable set GRAFANA_IP "${{ steps.grafana-ip.outputs.grafana_ip }}"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
 
       - name: Comment on PR
         uses: actions/github-script@v7
