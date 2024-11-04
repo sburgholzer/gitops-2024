@@ -49,7 +49,6 @@ jobs:
         # Run TFLint and capture output
         echo "Running TFLint..."
         OUTPUT=$(tflint -f json 2>&1) || true
-        echo "TFLint Output: $OUTPUT"
 
         # Create message header
         MESSAGE="### TFLint Results :mag:
@@ -70,6 +69,7 @@ jobs:
             ISSUES_TEXT=$(echo "$OUTPUT" | jq -r '.issues[] | "- **Summary**: \(.summary)\n  - Message: \(.message)\n  - Severity: \(.severity)\n  - Location: \(.range.filename) Line: \(.range.start.line):\(.range.start.column)\n"')
             MESSAGE="${MESSAGE}${ISSUES_TEXT}"
           fi
+        fi
         
         echo "$MESSAGE"
     
