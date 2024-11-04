@@ -15,16 +15,17 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+      - name: Get Changed Files
+        uses: tj-actions/changed-files@v40
       - name: Check for Terraform Changes
         id: check-tf
         run: |
-          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} > changes.txt
-          if grep -q '\.tf\|\.tfvars\|\.tfvars\.json' changes.txt; then
+          changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
+          if echo "$changed_files" | grep -q '\.tf\|\.tfvars\|\.tfvars\.json'; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
-
 
   infracost-pull-request-checks:
     needs: check-terraform-changes
