@@ -44,49 +44,62 @@ jobs:
 
     - name: Run TFLint
       id: tflint
-      continue-on-error: true
       run: |
-        OUTPUT=$(tflint -f json)
-        TFLINT_EXIT_CODE=$?
+        # Run TFLint and capture output
+        OUTPUT=$(tflint -f json 2>&1)
+        EXIT_CODE=$?
         
-        # Create message and save to output
-        MESSAGE="### TFLint Analysis Results :mag:
-  
-        "
-        ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
-        if [ $ISSUES -eq 0 ]; then
-          MESSAGE+="✅ No issues found"
+        # Format the message
+        echo "### TFLint Results :mag:" > tflint_report.md
+        echo "" >> tflint_report.md
+        
+        if [ $EXIT_CODE -eq 0 ]; then
+          echo "✅ No issues found" >> tflint_report.md
         else
-          MESSAGE+="⚠️ Found $ISSUES issue(s)
-  
-          "
-          MESSAGE+=$(echo "$OUTPUT" | jq -r '.issues[] | "- **\(.rule.name)** in `\(.range.filename)`:\n  - \(.message)\n  - Line: \(.range.start.line)"')
+          ISSUES=$(echo "$OUTPUT" | jq -r '.issues | length')
+          echo "⚠️ Found ${ISSUES} issue(s)" >> tflint_report.md
+          echo "" >> tflint_report.md
+          echo "$OUTPUT" | jq -r '.issues[] | "* **\(.rule.name)** in `\(.range.filename)`:\n  * \(.message)\n  * Line: \(.range.start.line)"' >> tflint_report.md
         fi
-          
-        # Store message and exit code
-        echo "tflint_message<<EOF" >> $GITHUB_ENV
-        echo "$MESSAGE" >> $GITHUB_ENV
+        
+        # Save report content to environment variable
+        echo "report<<EOF" >> $GITHUB_ENV
+        cat tflint_report.md >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
-        echo "tflint_exit_code=$TFLINT_EXIT_CODE" >> $GITHUB_ENV
-  
+        
+        # Set exit code for later use
+        echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
 
-    - name: Find Comment
-      uses: peter-evans/find-comment@v3
-      id: comment_found
-      with:
-        issue-number: ${{ github.event.pull_request.number }}
-        comment-author: 'github-actions[bot]'
-        body-includes: "TFLint Analysis Results"
-        token: ${{ secrets.GITHUB_TOKEN }}
-  
-    - name: Create or Update Comment
-      uses: peter-evans/create-or-update-comment@v4
-      with:
-         token: ${{ secrets.GITHUB_TOKEN }}
-         issue-number: ${{ github.event.pull_request.number }}
-         comment-id: ${{ steps.comment_found.outputs.comment-id }}
-         body: ${{ env.tflint_message }}
-      
+    - name: Find and Update PR Comment
+      run: |
+        # Get existing comments
+        COMMENTS=$(curl -s \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments")
+        
+        # Look for existing TFLint comment
+        COMMENT_ID=$(echo "$COMMENTS" | jq -r '.[] | select(.user.login=="github-actions[bot]" and contains(.body,"TFLint Results")) | .id')
+        
+        # Prepare the comment body
+        BODY=$(cat tflint_report.md)
+        
+        if [ -n "$COMMENT_ID" ]; then
+          # Update existing comment
+          curl -s -X PATCH \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/comments/$COMMENT_ID" \
+            -d "{\"body\":$(echo "$BODY" | jq -R -s .)}"
+        else
+          # Create new comment
+          curl -s -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            -d "{\"body\":$(echo "$BODY" | jq -R -s .)}"
+        fi
+    
     - name: Final Status Check
       if: always()
       run: |
