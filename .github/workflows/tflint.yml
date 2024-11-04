@@ -85,15 +85,20 @@ jobs:
         issue-number: ${{ github.event.pull_request.number }}
         comment-author: 'github-actions[bot]'
         body-includes: "### TFLint Results"
-
-    - name: Create or Update Comment
-      uses: peter-evans/create-or-update-comment@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        comment-id: ${{ steps.found_comment.outputs.comment-id }}
-        issue-number: ${{ github.event.pull_request.number }}
-        body: ${{ env.tflint_message }}
-        edit-mode: replace
+    
+    - name: Debug TFLint Message
+      run: |
+        echo "TFLint Message Content:"
+        echo "${{ env.tflint_message }}"
+    
+        # - name: Create or Update Comment
+    #   uses: peter-evans/create-or-update-comment@v4
+    #   with:
+    #     token: ${{ secrets.GITHUB_TOKEN }}
+    #     comment-id: ${{ steps.found_comment.outputs.comment-id }}
+    #     issue-number: ${{ github.event.pull_request.number }}
+    #     body: ${{ env.tflint_message }}
+    #     edit-mode: replace
     
     - name: Final Status Check
       if: always()
