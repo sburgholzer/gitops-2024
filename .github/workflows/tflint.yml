@@ -50,6 +50,13 @@ jobs:
         echo "Running TFLint..."
         OUTPUT=$(tflint -f json 2>&1) || true
         echo "TFLint Output: $OUTPUT"
+
+        # Create message header
+        MESSAGE="### TFLint Results :mag:
+          ### Issues:
+          "
+        
+        echo "$MESSAGE"
     
     # - name: Debug TFLint Message
     #   run: |
