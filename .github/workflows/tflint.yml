@@ -50,7 +50,8 @@ jobs:
         # Run TFLint and capture output
         echo "Running TFLint..."
         OUTPUT=$(tflint -f json 2>&1)
-        echo "tflint_exit_code=${TFLINT_EXIT_CODE}" >> $GITHUB_ENV
+        TFLINT_EXIT_CODE=$?
+        echo "tflint_exit_code=$TFLINT_EXIT_CODE" >> $GITHUB_ENV
 
         # Create message header
         MESSAGE="### TFLint Results :mag:
