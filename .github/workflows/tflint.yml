@@ -77,15 +77,23 @@ jobs:
         echo "EOF" >> $GITHUB_ENV
         echo "tflint_exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
 
-        - name: Find and Update PR Comment
-          run: |
-            # Create new comment
-            curl -s -X POST \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-              -d "{\"body\":$(echo "${{ env.report }}" | jq -R -s .)}"
+    - name: Find Comment
+      id: found_comment
+      uses: peter-evans/find-comment@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: "### TFLint Results"
 
+    - name: Create or Update Comment
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        comment-id: ${{ steps.found_comment.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: ${{ env.tflint_message }}
+        edit-mode: replace
     
     - name: Final Status Check
       if: always()
