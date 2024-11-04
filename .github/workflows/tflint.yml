@@ -91,10 +91,6 @@ jobs:
             - Raw Output: ${OUTPUT}
           "
         fi
-        
-        echo "=== Debut - Message content ==="
-        echo "$MESSAGE"
-        echo "=== End Debug ==="
 
         echo "tflint_message<<EOF" >> $GITHUB_ENV
         echo "$MESSAGE" >> $GITHUB_ENV
@@ -115,8 +111,6 @@ jobs:
         issue-number: ${{ github.event.pull_request.number }}
         comment-author: 'github-actions[bot]'
         body-includes: "### TFLint Results"
-    
-    
     
     # - name: Create or Update Comment
     #   uses: peter-evans/create-or-update-comment@v4
