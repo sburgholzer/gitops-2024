@@ -5,9 +5,10 @@ on:
     branches:
       - staging
       - main
+
 permissions:
   contents: read
-  pull-requests: write 
+  pull-requests: write
   checks: write
 
 jobs:
@@ -22,11 +23,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: v0.52.0
-
       - name: Create TFLint config
         run: |
           cat << EOF > .tflint.hcl
@@ -35,29 +31,28 @@ jobs:
             version = "0.27.0"
             source  = "github.com/terraform-linters/tflint-ruleset-aws"
           }
-          
+
           config {
-            module = true
-            force  = false
+            call_module_type = "all"
+            force = false
           }
           EOF
 
-      - name: Init TFLint
-        run: tflint --init
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
       - name: Run TFLint with reviewdog
         uses: reviewdog/action-tflint@v1
+        env:
+          REVIEWDOG_DEBUG: 1
         with:
-          github_token: ${{ secrets.github_token }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           working_directory: ./terraform
-          reporter: github-pr-review
+          reporter: github-pr-check
           fail_on_error: "false"
           filter_mode: "nofilter"
           level: "warning"
           tflint_version: "v0.52.0"
           tflint_init: "true"
+          flags: "--call-module-type=all"
+
 
     
     
