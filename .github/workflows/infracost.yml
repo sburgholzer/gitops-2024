@@ -6,9 +6,10 @@ on:
             - staging
             - main
 jobs:
+
   infracost-pull-request-checks:
     name: Infracost Pull Request Checks
-    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize')
+    if: (github.event.action == 'opened' || github.event.action == 'synchronize')
     runs-on: ubuntu-latest
     environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
     permissions:
@@ -60,4 +61,3 @@ jobs:
                          --policy-path=policies/cost.rego
 
 
-  
