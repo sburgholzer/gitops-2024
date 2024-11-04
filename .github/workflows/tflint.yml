@@ -4,6 +4,10 @@ on:
       branches:
         - staging
         - main
+      paths:
+        - '**.tf'
+        - '**.tfvars'
+        - '**.tfvars.json'
 permissions:
     contents: read
     pull-requests: write

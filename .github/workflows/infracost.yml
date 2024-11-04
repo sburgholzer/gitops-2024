@@ -5,6 +5,11 @@ on:
     branches:
             - staging
             - main
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+      - '**.tfvars.json'
+      
 jobs:
   infracost-pull-request-checks:
     name: Infracost Pull Request Checks
