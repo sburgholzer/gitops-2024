@@ -62,7 +62,7 @@ This repository contains the completed project from the GitOps with Terraform Mi
     - [configure-aws-credentials@v4](https://github.com/aws-actions/configure-aws-credentials)
     - [actions/checkout@v4](https://github.com/actions/checkout)
     - [hashicorp/setup-terraform@v3](https://github.com/hashicorp/setup-terraform)
-    - [gliech/create-github-secret-action@v1](https://github.com/gliech/create-github-secret-action)
+    - ~~[gliech/create-github-secret-action@v1](https://github.com/gliech/create-github-secret-action)~~
     - [actions/github-script@v7](https://github.com/actions/github-script)
 - **tfdestroy.yml**: Manual workflow for infrastructure destruction
   - GitHub Actions Used:
