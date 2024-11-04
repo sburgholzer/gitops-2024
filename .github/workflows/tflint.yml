@@ -13,12 +13,23 @@ permissions:
 
 jobs:
   tflint:
-    name: runner / tflint
-    runs-on: ubuntu-latest
+    name: TFLint
     environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+
+      - name: Setup TFLint
+        id: tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.52.0
+          tflint_wrapper: true
 
       - name: Create TFLint config
         run: |
@@ -35,18 +46,21 @@ jobs:
           }
           EOF
 
-      - name: tflint
-        uses: reviewdog/action-tflint@v1
+      - name: Run TFLint
+        id: run-tflint
+        run: |
+          tflint --init
+          tflint --format compact
+
+      - name: Post TFLint Comment
+        if: always()
+        uses: GetTerminus/terraform-pr-commenter@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          working_directory: ./terraform
-          reporter: github-pr-review
-          fail_on_error: "false"
-          filter_mode: "nofilter"
-          level: "warning"
-          tflint_version: "v0.52.0"
-          tflint_init: "true"
-          tflint_rulesets: "aws"
+          commenter_type: tflint
+          commenter_input: ${{ format('{0}{1}', steps.run-tflint.outputs.stdout, steps.run-tflint.outputs.stderr) }}
+          commenter_exitcode: ${{ steps.run-tflint.outputs.exitcode }}
 
 
 
