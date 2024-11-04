@@ -63,11 +63,20 @@ jobs:
         echo "EOF" >> $GITHUB_ENV
         
         exit $TFLINT_EXIT_CODE
-      
-    - name: Create Comment
+    
+    - name: Find Comment
+      uses: peter-evans/find-comment@v3
+      id: comment_found
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: "TFLint Analysis Results"
+
+    - name: Create or Update Comment
       uses: peter-evans/create-or-update-comment@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         issue-number: ${{ github.event.pull_request.number }}
         body: ${{ env.MESSAGE }}
+        comment-id: ${{ steps.fc.outputs.comment-id }}
     
