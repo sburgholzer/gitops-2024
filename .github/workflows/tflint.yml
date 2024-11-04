@@ -27,19 +27,36 @@ jobs:
       with:
         path: ~/.tflint.d/plugins
         key: ${{ matrix.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
-
-    - uses: terraform-linters/setup-tflint@v4
-      name: Setup TFLint
+    
+    - name: Run TFLint with reviewdog
+      uses: reviewdog/action-tflint@v1
       with:
-        tflint_version: v0.52.0
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        working_directory: ./terraform
+        reporter: github-pr-review
+        fail_on_error: "false"
+        filter_mode: "nofilter"
+        tflint_version: "v0.52.0"
+        tflint_init: "true"
+    
+    
+    
+    
+    # Below was the initial code just for the check, but now
+    # we are using a github action that uses TFLint and creates a comment on the PR
+    # - uses: terraform-linters/setup-tflint@v4
+    #   name: Setup TFLint
+    #   with:
+    #     tflint_version: v0.52.0
 
-    - name: Show version
-      run: tflint --version
+    # - name: Show version
+    #   run: tflint --version
 
-    - name: Init TFLint
-      run: tflint --init
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+    # - name: Init TFLint
+    #   run: tflint --init
+    #   env:
+    #     GITHUB_TOKEN: ${{ github.token }}
 
-    - name: Run TFLint
-      run: tflint -f compact
+    # - name: Run TFLint
+    #   run: tflint -f compact
+    

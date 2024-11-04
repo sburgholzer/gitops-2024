@@ -136,3 +136,4 @@ The code in the ./terraform directory is the starter code for the course. This c
 - Found a way to add comments to existing issues (port check and drift check) and not keep creating duplicate issues
 - Updated workflows to run in different environments
 - Implemented running on different environments
+- Updated [tfplan.yml](.github/workflows/tfplan.yml) to comment useful info to the PR
