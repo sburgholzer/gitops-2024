@@ -5,10 +5,10 @@ on:
       branches:
         - staging
         - main
-      paths:
-        - '**.tf'
-        - '**.tfvars'
-        - '**.tfvars.json'
+      # paths:
+      #   - '**.tf'
+      #   - '**.tfvars'
+      #   - '**.tfvars.json'
     workflow_call:
         secrets:
             ROLE_TO_ASSUME:
