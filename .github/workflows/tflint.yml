@@ -3,42 +3,58 @@ name: Lint
 on:
   pull_request:
     branches:
-        - staging
-        - main
+      - staging
+      - main
 
 jobs:
   tflint:
     environment: ${{ github.base_ref == 'main' && 'production' || github.base_ref == 'staging' && 'staging' || 'staging' }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     defaults:
-        run:
-            working-directory: ./terraform
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
+      run:
+        working-directory: ./terraform
 
     steps:
-    - uses: actions/checkout@v4
-      name: Checkout source code
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-    - uses: actions/cache@v4
-      name: Cache plugin dir
-      with:
-        path: ~/.tflint.d/plugins
-        key: ${{ matrix.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
-    
-    - name: Run TFLint with reviewdog
-      uses: reviewdog/action-tflint@v1
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        working_directory: ./terraform
-        reporter: github-pr-review
-        fail_on_error: "false"
-        filter_mode: "nofilter"
-        tflint_version: "v0.52.0"
-        tflint_init: "true"
-    
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.52.0
+
+      - name: Create TFLint config
+        run: |
+          cat << EOF > .tflint.hcl
+          plugin "aws" {
+            enabled = true
+            version = "0.27.0"
+            source  = "github.com/terraform-linters/tflint-ruleset-aws"
+          }
+          
+          config {
+            module = true
+            force  = false
+          }
+          EOF
+
+      - name: Init TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Run TFLint with reviewdog
+        uses: reviewdog/action-tflint@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          working_directory: ./terraform
+          reporter: github-pr-review
+          fail_on_error: "false"
+          filter_mode: "nofilter"
+          level: "warning"
+          tflint_version: "v0.52.0"
+          tflint_init: "true"
+
     
     
     
